@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>07 后台 UI 与设置页</title>
+  <link rel="stylesheet" href="css/common.css">
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="hero-card">
+        <h1>07 后台 UI 与设置页</h1>
+        <p>整理后台菜单页、Settings API、Dashboard Widget、Admin Notice 和后台资源加载。</p>
+      </div>
+      <img src="assets/07-admin-ui-settings.svg" alt="07 后台 UI 与设置页">
+    </section>
+
+    <nav class="nav">
+      <a href="index.html">首页</a>
+      <a href="01-hooks-functions.html">01</a>
+      <a href="02-theme-setup-assets.html">02</a>
+      <a href="03-template-loop-conditions.html">03</a>
+      <a href="04-cpt-taxonomy.html">04</a>
+      <a href="05-media-images.html">05</a>
+      <a href="06-menus-widgets-sidebars.html">06</a>
+      <a href="07-admin-ui-settings.html">07</a>
+      <a href="08-plugin-architecture.html">08</a>
+      <a href="09-shortcodes-content.html">09</a>
+      <a href="10-gutenberg-blocks.html">10</a>
+      <a href="11-elementor-integration.html">11</a>
+      <a href="12-customizer-settings-api.html">12</a>
+      <a href="13-forms-email-ajax.html">13</a>
+      <a href="14-security-permissions.html">14</a>
+      <a href="15-users-roles-capabilities.html">15</a>
+      <a href="16-rest-api-ajax.html">16</a>
+      <a href="17-seo-schema-head.html">17</a>
+      <a href="18-performance-cache.html">18</a>
+      <a href="19-migration-config.html">19</a>
+      <a href="20-debug-testing-maintenance.html">20</a>
+    </nav>
+
+    <section class="card">
+      <h2>本页关键词</h2>
+      <div class="tag-list">
+        <span>admin_menu</span>
+        <span>settings API</span>
+        <span>admin_notices</span>
+        <span>wp_dashboard_setup</span>
+        <span>admin_enqueue_scripts</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>学习目标</h2>
+      <ul class="checklist">
+        <li>会添加后台菜单页</li>
+        <li>会保存简单设置</li>
+        <li>会添加后台提醒</li>
+        <li>会只在后台指定页面加载资源</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>代码使用提醒</h2>
+      <p>本页代码适合用于学习和研究。复制到正式网站前，请先备份，并优先在测试环境验证。</p>
+      <p>涉及用户输入、后台保存、接口请求、删除操作和邮件发送时，要同时考虑权限、nonce、sanitize、validate 和 escape。</p>
+    </section>
+
+    <section class="code-grid">
+      
+    <article class="code-card">
+      <div class="code-title">
+        <h3>1. 添加后台设置页</h3>
+        <span class="badge">基础</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_add_admin_menu() {
+    add_options_page(
+        'My Site Settings',
+        'My Site Settings',
+        'manage_options',
+        'mysite-settings',
+        'mysite_render_settings_page'
+    );
+}
+add_action( 'admin_menu', 'mysite_add_admin_menu' );
+
+function mysite_render_settings_page() {
+    echo '&lt;div class="wrap"&gt;&lt;h1&gt;My Site Settings&lt;/h1&gt;&lt;/div&gt;';
+}</div>
+      <div class="code-note">add_options_page 会把页面放到“设置”菜单下。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>2. 注册设置项</h3>
+        <span class="badge">基础</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_register_settings() {
+    register_setting( 'mysite_settings_group', 'mysite_phone', array(
+        'type'              =&gt; 'string',
+        'sanitize_callback' =&gt; 'sanitize_text_field',
+        'default'           =&gt; '',
+    ) );
+}
+add_action( 'admin_init', 'mysite_register_settings' );</div>
+      <div class="code-note">保存设置时必须 sanitize。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>3. 设置页表单</h3>
+        <span class="badge">实用</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_render_settings_page() {
+    ?&gt;
+    &lt;div class="wrap"&gt;
+        &lt;h1&gt;My Site Settings&lt;/h1&gt;
+        &lt;form method="post" action="options.php"&gt;
+            &lt;?php settings_fields( 'mysite_settings_group' ); ?&gt;
+            &lt;label&gt;
+                电话：
+                &lt;input type="text" name="mysite_phone" value="&lt;?php echo esc_attr( get_option( 'mysite_phone', '' ) ); ?&gt;"&gt;
+            &lt;/label&gt;
+            &lt;?php submit_button(); ?&gt;
+        &lt;/form&gt;
+    &lt;/div&gt;
+    &lt;?php
+}</div>
+      <div class="code-note">options.php 会处理 Settings API 的保存流程。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>4. 后台提醒 Admin Notice</h3>
+        <span class="badge">实用</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_backup_admin_notice() {
+    if ( ! current_user_can( 'manage_options' ) ) {
+        return;
+    }
+
+    echo '&lt;div class="notice notice-warning is-dismissible"&gt;&lt;p&gt;';
+    echo esc_html__( '更新前请先备份网站。', 'mysite' );
+    echo '&lt;/p&gt;&lt;/div&gt;';
+}
+add_action( 'admin_notices', 'mysite_backup_admin_notice' );</div>
+      <div class="code-note">后台提示适合维护提醒，但不要过度打扰。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>5. 后台 Dashboard 小组件</h3>
+        <span class="badge">实用</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_add_dashboard_widget() {
+    wp_add_dashboard_widget(
+        'mysite_quick_notes',
+        '网站维护清单',
+        'mysite_dashboard_widget_html'
+    );
+}
+add_action( 'wp_dashboard_setup', 'mysite_add_dashboard_widget' );
+
+function mysite_dashboard_widget_html() {
+    echo '&lt;ul&gt;&lt;li&gt;测试表单邮件&lt;/li&gt;&lt;li&gt;检查插件更新&lt;/li&gt;&lt;li&gt;确认备份状态&lt;/li&gt;&lt;/ul&gt;';
+}</div>
+      <div class="code-note">适合给维护团队写后台操作手册。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>6. 只在设置页加载后台 CSS</h3>
+        <span class="badge">性能</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_admin_assets( $hook ) {
+    if ( 'settings_page_mysite-settings' !== $hook ) {
+        return;
+    }
+
+    wp_enqueue_style(
+        'mysite-admin',
+        plugin_dir_url( __FILE__ ) . 'assets/admin.css',
+        array(),
+        '1.0.0'
+    );
+}
+add_action( 'admin_enqueue_scripts', 'mysite_admin_assets' );</div>
+      <div class="code-note">后台资源也应按页面加载，不要全后台加载。</div>
+    </article>
+
+    </section>
+
+    <section class="summary-box">
+      <h2>本页总结</h2>
+      <p>后台 UI 代码能把维护流程产品化。设置页、提示、小组件和后台资源加载是非常实用的 WordPress 管理端能力。</p>
+    </section>
+  </main>
+</body>
+</html>

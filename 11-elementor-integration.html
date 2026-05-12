@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>11 Elementor 代码集成</title>
+  <link rel="stylesheet" href="css/common.css">
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="hero-card">
+        <h1>11 Elementor 代码集成</h1>
+        <p>整理 Elementor 可用的短代码、模板判断、资源加载和常见维护场景。</p>
+      </div>
+      <img src="assets/11-elementor-integration.svg" alt="11 Elementor 代码集成">
+    </section>
+
+    <nav class="nav">
+      <a href="index.html">首页</a>
+      <a href="01-hooks-functions.html">01</a>
+      <a href="02-theme-setup-assets.html">02</a>
+      <a href="03-template-loop-conditions.html">03</a>
+      <a href="04-cpt-taxonomy.html">04</a>
+      <a href="05-media-images.html">05</a>
+      <a href="06-menus-widgets-sidebars.html">06</a>
+      <a href="07-admin-ui-settings.html">07</a>
+      <a href="08-plugin-architecture.html">08</a>
+      <a href="09-shortcodes-content.html">09</a>
+      <a href="10-gutenberg-blocks.html">10</a>
+      <a href="11-elementor-integration.html">11</a>
+      <a href="12-customizer-settings-api.html">12</a>
+      <a href="13-forms-email-ajax.html">13</a>
+      <a href="14-security-permissions.html">14</a>
+      <a href="15-users-roles-capabilities.html">15</a>
+      <a href="16-rest-api-ajax.html">16</a>
+      <a href="17-seo-schema-head.html">17</a>
+      <a href="18-performance-cache.html">18</a>
+      <a href="19-migration-config.html">19</a>
+      <a href="20-debug-testing-maintenance.html">20</a>
+    </nav>
+
+    <section class="card">
+      <h2>本页关键词</h2>
+      <div class="tag-list">
+        <span>Elementor</span>
+        <span>shortcode</span>
+        <span>elementor/frontend/after_enqueue_scripts</span>
+        <span>is_plugin_active</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>学习目标</h2>
+      <ul class="checklist">
+        <li>会用短代码连接 Elementor</li>
+        <li>知道如何判断 Elementor 插件状态</li>
+        <li>会给 Elementor 前台加载资源</li>
+        <li>理解不要改 Elementor 核心文件</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>代码使用提醒</h2>
+      <p>本页代码适合用于学习和研究。复制到正式网站前，请先备份，并优先在测试环境验证。</p>
+      <p>涉及用户输入、后台保存、接口请求、删除操作和邮件发送时，要同时考虑权限、nonce、sanitize、validate 和 escape。</p>
+    </section>
+
+    <section class="code-grid">
+      
+    <article class="code-card">
+      <div class="code-title">
+        <h3>1. 判断 Elementor 是否启用</h3>
+        <span class="badge">基础</span>
+      </div>
+      <div class="code">&lt;?php
+include_once ABSPATH . 'wp-admin/includes/plugin.php';
+
+if ( is_plugin_active( 'elementor/elementor.php' ) ) {
+    // Elementor 已启用。
+}</div>
+      <div class="code-note">is_plugin_active 需要先引入 plugin.php。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>2. 给 Elementor 页面使用短代码</h3>
+        <span class="badge">实用</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_quote_box_shortcode() {
+    return '&lt;div class="quote-box"&gt;&lt;h3&gt;Request a Quote&lt;/h3&gt;&lt;p&gt;Contact our team for project pricing.&lt;/p&gt;&lt;/div&gt;';
+}
+add_shortcode( 'mysite_quote_box', 'mysite_quote_box_shortcode' );
+
+// Elementor 的 Shortcode 小工具中使用：
+// [mysite_quote_box]</div>
+      <div class="code-note">最稳定的集成方式之一：PHP 逻辑封装成 shortcode，Elementor 页面插入。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>3. Elementor 前台加载额外脚本</h3>
+        <span class="badge">实用</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_elementor_frontend_assets() {
+    wp_enqueue_script(
+        'mysite-elementor-enhance',
+        get_stylesheet_directory_uri() . '/assets/js/elementor-enhance.js',
+        array(),
+        '1.0.0',
+        true
+    );
+}
+add_action( 'elementor/frontend/after_enqueue_scripts', 'mysite_elementor_frontend_assets' );</div>
+      <div class="code-note">适合只在 Elementor 前台上下文添加增强脚本。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>4. 在 body class 中标记 Elementor 页面</h3>
+        <span class="badge">实用</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_elementor_body_class( $classes ) {
+    if ( did_action( 'elementor/loaded' ) &amp;&amp; is_singular() ) {
+        $classes[] = 'has-elementor-support';
+    }
+
+    return $classes;
+}
+add_filter( 'body_class', 'mysite_elementor_body_class' );</div>
+      <div class="code-note">可以给 Elementor 相关页面加样式标记。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>5. 避免 Elementor 页面重复加载主题模块</h3>
+        <span class="badge">性能</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_skip_theme_slider_on_elementor() {
+    if ( did_action( 'elementor/loaded' ) &amp;&amp; is_page_template( 'elementor_header_footer' ) ) {
+        return;
+    }
+
+    wp_enqueue_script(
+        'mysite-slider',
+        get_stylesheet_directory_uri() . '/assets/js/slider.js',
+        array(),
+        '1.0.0',
+        true
+    );
+}
+add_action( 'wp_enqueue_scripts', 'mysite_skip_theme_slider_on_elementor' );</div>
+      <div class="code-note">减少 Elementor 页面中不必要的主题脚本。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>6. Elementor 中输出动态联系信息</h3>
+        <span class="badge">实用</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_phone_shortcode() {
+    $phone = get_option( 'mysite_phone', '+61 0000 0000' );
+
+    return '&lt;a href="tel:' . esc_attr( preg_replace( '/[^0-9+]/', '', $phone ) ) . '"&gt;' . esc_html( $phone ) . '&lt;/a&gt;';
+}
+add_shortcode( 'mysite_phone', 'mysite_phone_shortcode' );</div>
+      <div class="code-note">后台设置 + shortcode 是让 Elementor 内容动态化的实用组合。</div>
+    </article>
+
+    </section>
+
+    <section class="summary-box">
+      <h2>本页总结</h2>
+      <p>Elementor 集成建议通过短代码、hooks 和条件加载完成。不要改 Elementor 核心文件，避免更新后丢失。</p>
+    </section>
+  </main>
+</body>
+</html>

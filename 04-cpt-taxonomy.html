@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>04 自定义文章类型与分类法</title>
+  <link rel="stylesheet" href="css/common.css">
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="hero-card">
+        <h1>04 自定义文章类型与分类法</h1>
+        <p>整理 CPT、taxonomy、rewrite、归档页和后台菜单场景。</p>
+      </div>
+      <img src="assets/04-cpt-taxonomy.svg" alt="04 自定义文章类型与分类法">
+    </section>
+
+    <nav class="nav">
+      <a href="index.html">首页</a>
+      <a href="01-hooks-functions.html">01</a>
+      <a href="02-theme-setup-assets.html">02</a>
+      <a href="03-template-loop-conditions.html">03</a>
+      <a href="04-cpt-taxonomy.html">04</a>
+      <a href="05-media-images.html">05</a>
+      <a href="06-menus-widgets-sidebars.html">06</a>
+      <a href="07-admin-ui-settings.html">07</a>
+      <a href="08-plugin-architecture.html">08</a>
+      <a href="09-shortcodes-content.html">09</a>
+      <a href="10-gutenberg-blocks.html">10</a>
+      <a href="11-elementor-integration.html">11</a>
+      <a href="12-customizer-settings-api.html">12</a>
+      <a href="13-forms-email-ajax.html">13</a>
+      <a href="14-security-permissions.html">14</a>
+      <a href="15-users-roles-capabilities.html">15</a>
+      <a href="16-rest-api-ajax.html">16</a>
+      <a href="17-seo-schema-head.html">17</a>
+      <a href="18-performance-cache.html">18</a>
+      <a href="19-migration-config.html">19</a>
+      <a href="20-debug-testing-maintenance.html">20</a>
+    </nav>
+
+    <section class="card">
+      <h2>本页关键词</h2>
+      <div class="tag-list">
+        <span>register_post_type</span>
+        <span>register_taxonomy</span>
+        <span>rewrite</span>
+        <span>archive</span>
+        <span>CPT</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>学习目标</h2>
+      <ul class="checklist">
+        <li>会注册 CPT</li>
+        <li>会注册自定义分类法</li>
+        <li>理解 rewrite 和 archive</li>
+        <li>知道 CPT 与 taxonomy 的搭配</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>代码使用提醒</h2>
+      <p>本页代码适合用于学习和研究。复制到正式网站前，请先备份，并优先在测试环境验证。</p>
+      <p>涉及用户输入、后台保存、接口请求、删除操作和邮件发送时，要同时考虑权限、nonce、sanitize、validate 和 escape。</p>
+    </section>
+
+    <section class="code-grid">
+      
+    <article class="code-card">
+      <div class="code-title">
+        <h3>1. 注册 Projects 自定义文章类型</h3>
+        <span class="badge">基础</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_register_project_cpt() {
+    register_post_type( 'project', array(
+        'labels' =&gt; array(
+            'name'          =&gt; 'Projects',
+            'singular_name' =&gt; 'Project',
+        ),
+        'public'       =&gt; true,
+        'has_archive'  =&gt; true,
+        'menu_icon'    =&gt; 'dashicons-portfolio',
+        'show_in_rest' =&gt; true,
+        'rewrite'      =&gt; array( 'slug' =&gt; 'projects' ),
+        'supports'     =&gt; array( 'title', 'editor', 'thumbnail', 'excerpt' ),
+    ) );
+}
+add_action( 'init', 'mysite_register_project_cpt' );</div>
+      <div class="code-note">CPT 适合管理案例、项目、产品资料、团队成员等独立内容。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>2. 给 CPT 注册分类法</h3>
+        <span class="badge">基础</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_register_project_taxonomy() {
+    register_taxonomy( 'project_type', array( 'project' ), array(
+        'labels' =&gt; array(
+            'name' =&gt; 'Project Types',
+        ),
+        'public'       =&gt; true,
+        'hierarchical' =&gt; true,
+        'show_in_rest' =&gt; true,
+        'rewrite'      =&gt; array( 'slug' =&gt; 'project-type' ),
+    ) );
+}
+add_action( 'init', 'mysite_register_project_taxonomy' );</div>
+      <div class="code-note">hierarchical=true 更像分类；false 更像标签。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>3. 查询 CPT 列表</h3>
+        <span class="badge">实用</span>
+      </div>
+      <div class="code">&lt;?php
+$projects = new WP_Query( array(
+    'post_type'      =&gt; 'project',
+    'posts_per_page' =&gt; 6,
+) );
+
+if ( $projects-&gt;have_posts() ) {
+    while ( $projects-&gt;have_posts() ) {
+        $projects-&gt;the_post();
+        the_title( '&lt;h3&gt;', '&lt;/h3&gt;' );
+    }
+    wp_reset_postdata();
+}</div>
+      <div class="code-note">CPT 查询和普通文章查询类似，关键是 post_type。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>4. 按自定义分类法查询 CPT</h3>
+        <span class="badge">实用</span>
+      </div>
+      <div class="code">&lt;?php
+$decking_projects = new WP_Query( array(
+    'post_type' =&gt; 'project',
+    'tax_query' =&gt; array(
+        array(
+            'taxonomy' =&gt; 'project_type',
+            'field'    =&gt; 'slug',
+            'terms'    =&gt; 'decking',
+        ),
+    ),
+) );</div>
+      <div class="code-note">tax_query 是项目筛选、案例分类、产品属性筛选的基础。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>5. 启用/停用插件时刷新 rewrite</h3>
+        <span class="badge">维护</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_project_plugin_activate() {
+    mysite_register_project_cpt();
+    mysite_register_project_taxonomy();
+    flush_rewrite_rules();
+}
+register_activation_hook( __FILE__, 'mysite_project_plugin_activate' );
+
+function mysite_project_plugin_deactivate() {
+    flush_rewrite_rules();
+}
+register_deactivation_hook( __FILE__, 'mysite_project_plugin_deactivate' );</div>
+      <div class="code-note">不要每次 init 都 flush_rewrite_rules，会影响性能。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>6. 给 CPT 后台列表增加缩略图列</h3>
+        <span class="badge">后台</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_project_columns( $columns ) {
+    $columns['thumbnail'] = '缩略图';
+    return $columns;
+}
+add_filter( 'manage_project_posts_columns', 'mysite_project_columns' );
+
+function mysite_project_column_content( $column, $post_id ) {
+    if ( 'thumbnail' === $column ) {
+        echo get_the_post_thumbnail( $post_id, array( 80, 80 ) );
+    }
+}
+add_action( 'manage_project_posts_custom_column', 'mysite_project_column_content', 10, 2 );</div>
+      <div class="code-note">后台列表列可以提升内容维护效率。</div>
+    </article>
+
+    </section>
+
+    <section class="summary-box">
+      <h2>本页总结</h2>
+      <p>CPT + taxonomy 是 WordPress 内容建模的核心能力。案例、项目、团队、资料库等都可以用这套思路管理。</p>
+    </section>
+  </main>
+</body>
+</html>

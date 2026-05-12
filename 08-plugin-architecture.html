@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>08 插件结构与模块化</title>
+  <link rel="stylesheet" href="css/common.css">
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="hero-card">
+        <h1>08 插件结构与模块化</h1>
+        <p>整理插件头、目录结构、加载文件、激活停用、卸载和类封装。</p>
+      </div>
+      <img src="assets/08-plugin-architecture.svg" alt="08 插件结构与模块化">
+    </section>
+
+    <nav class="nav">
+      <a href="index.html">首页</a>
+      <a href="01-hooks-functions.html">01</a>
+      <a href="02-theme-setup-assets.html">02</a>
+      <a href="03-template-loop-conditions.html">03</a>
+      <a href="04-cpt-taxonomy.html">04</a>
+      <a href="05-media-images.html">05</a>
+      <a href="06-menus-widgets-sidebars.html">06</a>
+      <a href="07-admin-ui-settings.html">07</a>
+      <a href="08-plugin-architecture.html">08</a>
+      <a href="09-shortcodes-content.html">09</a>
+      <a href="10-gutenberg-blocks.html">10</a>
+      <a href="11-elementor-integration.html">11</a>
+      <a href="12-customizer-settings-api.html">12</a>
+      <a href="13-forms-email-ajax.html">13</a>
+      <a href="14-security-permissions.html">14</a>
+      <a href="15-users-roles-capabilities.html">15</a>
+      <a href="16-rest-api-ajax.html">16</a>
+      <a href="17-seo-schema-head.html">17</a>
+      <a href="18-performance-cache.html">18</a>
+      <a href="19-migration-config.html">19</a>
+      <a href="20-debug-testing-maintenance.html">20</a>
+    </nav>
+
+    <section class="card">
+      <h2>本页关键词</h2>
+      <div class="tag-list">
+        <span>plugin header</span>
+        <span>activation hook</span>
+        <span>deactivation hook</span>
+        <span>uninstall.php</span>
+        <span>classes</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>学习目标</h2>
+      <ul class="checklist">
+        <li>会写最小插件</li>
+        <li>会拆分 include 文件</li>
+        <li>知道激活/停用/卸载区别</li>
+        <li>理解类封装插件入口</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>代码使用提醒</h2>
+      <p>本页代码适合用于学习和研究。复制到正式网站前，请先备份，并优先在测试环境验证。</p>
+      <p>涉及用户输入、后台保存、接口请求、删除操作和邮件发送时，要同时考虑权限、nonce、sanitize、validate 和 escape。</p>
+    </section>
+
+    <section class="code-grid">
+      
+    <article class="code-card">
+      <div class="code-title">
+        <h3>1. 最小插件文件</h3>
+        <span class="badge">基础</span>
+      </div>
+      <div class="code">&lt;?php
+/**
+ * Plugin Name: My Site Toolkit
+ * Description: 网站自定义功能集合。
+ * Version: 1.0.0
+ * Author: Your Name
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+add_action( 'init', 'mysite_toolkit_init' );
+
+function mysite_toolkit_init() {
+    // 插件功能入口。
+}</div>
+      <div class="code-note">插件头注释决定后台插件列表显示。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>2. 推荐插件目录结构</h3>
+        <span class="badge">结构</span>
+      </div>
+      <div class="code">my-site-toolkit/
+├── my-site-toolkit.php
+├── includes/
+│   ├── helpers.php
+│   ├── shortcodes.php
+│   └── admin.php
+├── assets/
+│   ├── css/
+│   └── js/
+└── uninstall.php</div>
+      <div class="code-note">代码多了以后要拆分文件，不要全部塞进一个 PHP。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>3. 加载 includes 文件</h3>
+        <span class="badge">基础</span>
+      </div>
+      <div class="code">&lt;?php
+define( 'MYSITE_TOOLKIT_PATH', plugin_dir_path( __FILE__ ) );
+define( 'MYSITE_TOOLKIT_URL', plugin_dir_url( __FILE__ ) );
+
+require_once MYSITE_TOOLKIT_PATH . 'includes/helpers.php';
+require_once MYSITE_TOOLKIT_PATH . 'includes/shortcodes.php';
+require_once MYSITE_TOOLKIT_PATH . 'includes/admin.php';</div>
+      <div class="code-note">定义 PATH 和 URL 常量能让文件引用更清晰。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>4. 激活和停用 hook</h3>
+        <span class="badge">维护</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_toolkit_activate() {
+    // 创建默认选项、刷新 rewrite 等。
+    update_option( 'mysite_toolkit_version', '1.0.0' );
+}
+register_activation_hook( __FILE__, 'mysite_toolkit_activate' );
+
+function mysite_toolkit_deactivate() {
+    // 停用时清理临时计划任务等。
+}
+register_deactivation_hook( __FILE__, 'mysite_toolkit_deactivate' );</div>
+      <div class="code-note">激活不是每次加载，停用也不是卸载。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>5. uninstall.php 清理数据</h3>
+        <span class="badge">维护</span>
+      </div>
+      <div class="code">&lt;?php
+// uninstall.php
+if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
+    exit;
+}
+
+delete_option( 'mysite_toolkit_version' );
+delete_option( 'mysite_phone' );</div>
+      <div class="code-note">只有用户删除插件时才会执行 uninstall.php。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>6. 类封装插件入口</h3>
+        <span class="badge">进阶</span>
+      </div>
+      <div class="code">&lt;?php
+final class MySite_Toolkit {
+    public function __construct() {
+        add_action( 'init', array( $this, 'init' ) );
+        add_action( 'wp_enqueue_scripts', array( $this, 'assets' ) );
+    }
+
+    public function init() {
+        // 初始化功能。
+    }
+
+    public function assets() {
+        // 加载资源。
+    }
+}
+
+new MySite_Toolkit();</div>
+      <div class="code-note">类封装适合中大型插件，能减少全局函数冲突。</div>
+    </article>
+
+    </section>
+
+    <section class="summary-box">
+      <h2>本页总结</h2>
+      <p>插件学习的重点不是把代码都放一起，而是理解生命周期、目录结构和模块化。这样后期扩展才不乱。</p>
+    </section>
+  </main>
+</body>
+</html>

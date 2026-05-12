@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>01 Hooks 与 functions.php</title>
+  <link rel="stylesheet" href="css/common.css">
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="hero-card">
+        <h1>01 Hooks 与 functions.php</h1>
+        <p>系统理解 action、filter、优先级、参数数量、移除 hook 和自定义 hook。</p>
+      </div>
+      <img src="assets/01-hooks-functions.svg" alt="01 Hooks 与 functions.php">
+    </section>
+
+    <nav class="nav">
+      <a href="index.html">首页</a>
+      <a href="01-hooks-functions.html">01</a>
+      <a href="02-theme-setup-assets.html">02</a>
+      <a href="03-template-loop-conditions.html">03</a>
+      <a href="04-cpt-taxonomy.html">04</a>
+      <a href="05-media-images.html">05</a>
+      <a href="06-menus-widgets-sidebars.html">06</a>
+      <a href="07-admin-ui-settings.html">07</a>
+      <a href="08-plugin-architecture.html">08</a>
+      <a href="09-shortcodes-content.html">09</a>
+      <a href="10-gutenberg-blocks.html">10</a>
+      <a href="11-elementor-integration.html">11</a>
+      <a href="12-customizer-settings-api.html">12</a>
+      <a href="13-forms-email-ajax.html">13</a>
+      <a href="14-security-permissions.html">14</a>
+      <a href="15-users-roles-capabilities.html">15</a>
+      <a href="16-rest-api-ajax.html">16</a>
+      <a href="17-seo-schema-head.html">17</a>
+      <a href="18-performance-cache.html">18</a>
+      <a href="19-migration-config.html">19</a>
+      <a href="20-debug-testing-maintenance.html">20</a>
+    </nav>
+
+    <section class="card">
+      <h2>本页关键词</h2>
+      <div class="tag-list">
+        <span>add_action</span>
+        <span>add_filter</span>
+        <span>priority</span>
+        <span>accepted_args</span>
+        <span>do_action</span>
+        <span>apply_filters</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>学习目标</h2>
+      <ul class="checklist">
+        <li>理解 action 和 filter 的区别</li>
+        <li>知道优先级和参数数量如何影响执行</li>
+        <li>会写自定义 hook 方便后续扩展</li>
+        <li>知道如何移除已经注册的 hook</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>代码使用提醒</h2>
+      <p>本页代码适合用于学习和研究。复制到正式网站前，请先备份，并优先在测试环境验证。</p>
+      <p>涉及用户输入、后台保存、接口请求、删除操作和邮件发送时，要同时考虑权限、nonce、sanitize、validate 和 escape。</p>
+    </section>
+
+    <section class="code-grid">
+      
+    <article class="code-card">
+      <div class="code-title">
+        <h3>1. Action：在 init 阶段注册逻辑</h3>
+        <span class="badge">基础</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_register_features() {
+    // 适合注册 CPT、taxonomy、rewrite 等。
+}
+add_action( 'init', 'mysite_register_features' );</div>
+      <div class="code-note">Action 是“到某个时机执行我的函数”。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>2. Filter：修改文章标题</h3>
+        <span class="badge">基础</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_add_title_suffix( $title, $post_id ) {
+    if ( is_admin() ) {
+        return $title;
+    }
+
+    return $title . ' | EVODEK';
+}
+add_filter( 'the_title', 'mysite_add_title_suffix', 10, 2 );</div>
+      <div class="code-note">Filter 必须返回修改后的值。这里 accepted_args 为 2，所以回调接收两个参数。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>3. Hook 优先级：控制执行顺序</h3>
+        <span class="badge">进阶</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_early_task() {
+    // 更早执行
+}
+add_action( 'wp_enqueue_scripts', 'mysite_early_task', 5 );
+
+function mysite_late_task() {
+    // 更晚执行
+}
+add_action( 'wp_enqueue_scripts', 'mysite_late_task', 30 );</div>
+      <div class="code-note">数字越小越早执行；相同优先级按注册顺序执行。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>4. 移除 hook：取消某个回调</h3>
+        <span class="badge">进阶</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_remove_parent_theme_feature() {
+    remove_action( 'wp_footer', 'parent_theme_footer_credit' );
+}
+add_action( 'after_setup_theme', 'mysite_remove_parent_theme_feature', 20 );</div>
+      <div class="code-note">remove_action 的 hook、函数名、优先级必须和添加时一致。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>5. 自定义 action：给自己的代码留扩展点</h3>
+        <span class="badge">进阶</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_render_product_card() {
+    echo '&lt;article class="product-card"&gt;';
+
+    do_action( 'mysite_before_product_card_content' );
+
+    echo '&lt;h3&gt;Product Title&lt;/h3&gt;';
+
+    do_action( 'mysite_after_product_card_content' );
+
+    echo '&lt;/article&gt;';
+}
+
+function mysite_add_badge() {
+    echo '&lt;span class="badge"&gt;New&lt;/span&gt;';
+}
+add_action( 'mysite_before_product_card_content', 'mysite_add_badge' );</div>
+      <div class="code-note">自定义 action 方便后期在不改原函数的情况下插入内容。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>6. 自定义 filter：让文字可被二次修改</h3>
+        <span class="badge">进阶</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_get_cta_text() {
+    $text = 'Learn More';
+
+    return apply_filters( 'mysite_cta_text', $text );
+}
+
+function mysite_change_cta_text( $text ) {
+    return 'Get a Free Quote';
+}
+add_filter( 'mysite_cta_text', 'mysite_change_cta_text' );</div>
+      <div class="code-note">apply_filters 会把默认值交给外部回调修改。</div>
+    </article>
+
+    </section>
+
+    <section class="summary-box">
+      <h2>本页总结</h2>
+      <p>Hooks 是 WordPress 代码体系的核心。熟练掌握 add_action、add_filter、优先级、参数和自定义 hook，后续主题和插件开发都会更清晰。</p>
+    </section>
+  </main>
+</body>
+</html>

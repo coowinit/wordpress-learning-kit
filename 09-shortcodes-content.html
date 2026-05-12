@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>09 短代码与内容组件</title>
+  <link rel="stylesheet" href="css/common.css">
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="hero-card">
+        <h1>09 短代码与内容组件</h1>
+        <p>整理短代码属性、包裹内容、输出缓冲、嵌套短代码和资源按需加载。</p>
+      </div>
+      <img src="assets/09-shortcodes-content.svg" alt="09 短代码与内容组件">
+    </section>
+
+    <nav class="nav">
+      <a href="index.html">首页</a>
+      <a href="01-hooks-functions.html">01</a>
+      <a href="02-theme-setup-assets.html">02</a>
+      <a href="03-template-loop-conditions.html">03</a>
+      <a href="04-cpt-taxonomy.html">04</a>
+      <a href="05-media-images.html">05</a>
+      <a href="06-menus-widgets-sidebars.html">06</a>
+      <a href="07-admin-ui-settings.html">07</a>
+      <a href="08-plugin-architecture.html">08</a>
+      <a href="09-shortcodes-content.html">09</a>
+      <a href="10-gutenberg-blocks.html">10</a>
+      <a href="11-elementor-integration.html">11</a>
+      <a href="12-customizer-settings-api.html">12</a>
+      <a href="13-forms-email-ajax.html">13</a>
+      <a href="14-security-permissions.html">14</a>
+      <a href="15-users-roles-capabilities.html">15</a>
+      <a href="16-rest-api-ajax.html">16</a>
+      <a href="17-seo-schema-head.html">17</a>
+      <a href="18-performance-cache.html">18</a>
+      <a href="19-migration-config.html">19</a>
+      <a href="20-debug-testing-maintenance.html">20</a>
+    </nav>
+
+    <section class="card">
+      <h2>本页关键词</h2>
+      <div class="tag-list">
+        <span>add_shortcode</span>
+        <span>shortcode_atts</span>
+        <span>do_shortcode</span>
+        <span>ob_start</span>
+        <span>has_shortcode</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>学习目标</h2>
+      <ul class="checklist">
+        <li>会写返回 HTML 的短代码</li>
+        <li>会处理属性和内容</li>
+        <li>会检测短代码并按需加载资源</li>
+        <li>知道短代码命名避免冲突</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>代码使用提醒</h2>
+      <p>本页代码适合用于学习和研究。复制到正式网站前，请先备份，并优先在测试环境验证。</p>
+      <p>涉及用户输入、后台保存、接口请求、删除操作和邮件发送时，要同时考虑权限、nonce、sanitize、validate 和 escape。</p>
+    </section>
+
+    <section class="code-grid">
+      
+    <article class="code-card">
+      <div class="code-title">
+        <h3>1. 基础短代码</h3>
+        <span class="badge">基础</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_button_shortcode( $atts ) {
+    $atts = shortcode_atts( array(
+        'text' =&gt; 'Learn More',
+        'url'  =&gt; '#',
+    ), $atts, 'mysite_button' );
+
+    return '&lt;a class="btn" href="' . esc_url( $atts['url'] ) . '"&gt;' . esc_html( $atts['text'] ) . '&lt;/a&gt;';
+}
+add_shortcode( 'mysite_button', 'mysite_button_shortcode' );</div>
+      <div class="code-note">短代码回调必须 return，不建议直接 echo。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>2. 包裹内容短代码</h3>
+        <span class="badge">基础</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_notice_shortcode( $atts, $content = '' ) {
+    $atts = shortcode_atts( array(
+        'type' =&gt; 'info',
+    ), $atts, 'mysite_notice' );
+
+    return '&lt;div class="notice notice-' . esc_attr( $atts['type'] ) . '"&gt;' . wp_kses_post( do_shortcode( $content ) ) . '&lt;/div&gt;';
+}
+add_shortcode( 'mysite_notice', 'mysite_notice_shortcode' );
+
+// 用法：[mysite_notice type="warning"]内容[/mysite_notice]</div>
+      <div class="code-note">包裹内容要处理 do_shortcode，允许内部短代码继续执行。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>3. 用 ob_start 写复杂 HTML</h3>
+        <span class="badge">实用</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_contact_card_shortcode( $atts ) {
+    $atts = shortcode_atts( array(
+        'title' =&gt; 'Contact Us',
+        'email' =&gt; 'info@example.com',
+    ), $atts, 'mysite_contact_card' );
+
+    ob_start();
+    ?&gt;
+    &lt;div class="contact-card"&gt;
+        &lt;h3&gt;&lt;?php echo esc_html( $atts['title'] ); ?&gt;&lt;/h3&gt;
+        &lt;p&gt;&lt;?php echo esc_html( $atts['email'] ); ?&gt;&lt;/p&gt;
+    &lt;/div&gt;
+    &lt;?php
+    return ob_get_clean();
+}
+add_shortcode( 'mysite_contact_card', 'mysite_contact_card_shortcode' );</div>
+      <div class="code-note">复杂 HTML 用输出缓冲更容易维护。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>4. 只在有短代码的页面加载 CSS</h3>
+        <span class="badge">性能</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_shortcode_assets() {
+    global $post;
+
+    if ( is_a( $post, 'WP_Post' ) &amp;&amp; has_shortcode( $post-&gt;post_content, 'mysite_contact_card' ) ) {
+        wp_enqueue_style(
+            'mysite-contact-card',
+            plugin_dir_url( __FILE__ ) . 'assets/contact-card.css',
+            array(),
+            '1.0.0'
+        );
+    }
+}
+add_action( 'wp_enqueue_scripts', 'mysite_shortcode_assets' );</div>
+      <div class="code-note">短代码资源最好按需加载。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>5. 短代码输出查询结果</h3>
+        <span class="badge">进阶</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_latest_posts_shortcode() {
+    $q = new WP_Query( array(
+        'posts_per_page' =&gt; 3,
+        'post_status'    =&gt; 'publish',
+    ) );
+
+    ob_start();
+
+    if ( $q-&gt;have_posts() ) {
+        echo '&lt;ul class="latest-posts"&gt;';
+        while ( $q-&gt;have_posts() ) {
+            $q-&gt;the_post();
+            echo '&lt;li&gt;&lt;a href="' . esc_url( get_permalink() ) . '"&gt;' . esc_html( get_the_title() ) . '&lt;/a&gt;&lt;/li&gt;';
+        }
+        echo '&lt;/ul&gt;';
+        wp_reset_postdata();
+    }
+
+    return ob_get_clean();
+}
+add_shortcode( 'mysite_latest_posts', 'mysite_latest_posts_shortcode' );</div>
+      <div class="code-note">短代码中写 WP_Query 后也要 reset。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>6. 判断短代码是否已存在</h3>
+        <span class="badge">兼容</span>
+      </div>
+      <div class="code">&lt;?php
+if ( ! shortcode_exists( 'mysite_button' ) ) {
+    add_shortcode( 'mysite_button', 'mysite_button_shortcode' );
+}</div>
+      <div class="code-note">避免和其他插件短代码同名覆盖。</div>
+    </article>
+
+    </section>
+
+    <section class="summary-box">
+      <h2>本页总结</h2>
+      <p>短代码适合把可复用组件放进页面、文章或 Elementor。重点是 return、安全输出和资源按需加载。</p>
+    </section>
+  </main>
+</body>
+</html>

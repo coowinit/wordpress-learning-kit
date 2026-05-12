@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>10 Gutenberg 与区块支持</title>
+  <link rel="stylesheet" href="css/common.css">
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="hero-card">
+        <h1>10 Gutenberg 与区块支持</h1>
+        <p>整理主题支持、编辑器样式、区块样式、区块 Pattern 和禁用区块场景。</p>
+      </div>
+      <img src="assets/10-gutenberg-blocks.svg" alt="10 Gutenberg 与区块支持">
+    </section>
+
+    <nav class="nav">
+      <a href="index.html">首页</a>
+      <a href="01-hooks-functions.html">01</a>
+      <a href="02-theme-setup-assets.html">02</a>
+      <a href="03-template-loop-conditions.html">03</a>
+      <a href="04-cpt-taxonomy.html">04</a>
+      <a href="05-media-images.html">05</a>
+      <a href="06-menus-widgets-sidebars.html">06</a>
+      <a href="07-admin-ui-settings.html">07</a>
+      <a href="08-plugin-architecture.html">08</a>
+      <a href="09-shortcodes-content.html">09</a>
+      <a href="10-gutenberg-blocks.html">10</a>
+      <a href="11-elementor-integration.html">11</a>
+      <a href="12-customizer-settings-api.html">12</a>
+      <a href="13-forms-email-ajax.html">13</a>
+      <a href="14-security-permissions.html">14</a>
+      <a href="15-users-roles-capabilities.html">15</a>
+      <a href="16-rest-api-ajax.html">16</a>
+      <a href="17-seo-schema-head.html">17</a>
+      <a href="18-performance-cache.html">18</a>
+      <a href="19-migration-config.html">19</a>
+      <a href="20-debug-testing-maintenance.html">20</a>
+    </nav>
+
+    <section class="card">
+      <h2>本页关键词</h2>
+      <div class="tag-list">
+        <span>Gutenberg</span>
+        <span>add_theme_support</span>
+        <span>register_block_style</span>
+        <span>block pattern</span>
+        <span>allowed_block_types_all</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>学习目标</h2>
+      <ul class="checklist">
+        <li>会添加区块编辑器主题支持</li>
+        <li>会加载编辑器样式</li>
+        <li>会注册区块样式和 Pattern</li>
+        <li>会限制可用区块</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>代码使用提醒</h2>
+      <p>本页代码适合用于学习和研究。复制到正式网站前，请先备份，并优先在测试环境验证。</p>
+      <p>涉及用户输入、后台保存、接口请求、删除操作和邮件发送时，要同时考虑权限、nonce、sanitize、validate 和 escape。</p>
+    </section>
+
+    <section class="code-grid">
+      
+    <article class="code-card">
+      <div class="code-title">
+        <h3>1. 添加区块编辑器主题支持</h3>
+        <span class="badge">基础</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_block_editor_setup() {
+    add_theme_support( 'align-wide' );
+    add_theme_support( 'editor-styles' );
+    add_theme_support( 'responsive-embeds' );
+    add_editor_style( 'assets/css/editor-style.css' );
+}
+add_action( 'after_setup_theme', 'mysite_block_editor_setup' );</div>
+      <div class="code-note">让编辑器体验更接近前台。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>2. 注册区块样式</h3>
+        <span class="badge">实用</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_register_block_styles() {
+    register_block_style( 'core/button', array(
+        'name'  =&gt; 'outline-dark',
+        'label' =&gt; '深色描边按钮',
+    ) );
+}
+add_action( 'init', 'mysite_register_block_styles' );</div>
+      <div class="code-note">可给核心区块增加自定义样式选项。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>3. 注册区块 Pattern</h3>
+        <span class="badge">实用</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_register_patterns() {
+    register_block_pattern(
+        'mysite/hero-simple',
+        array(
+            'title'       =&gt; 'Simple Hero',
+            'description' =&gt; '一个简单的首页 Hero 区块组合。',
+            'content'     =&gt; '&lt;!-- wp:heading --&gt;&lt;h2&gt;Build Better Outdoor Spaces&lt;/h2&gt;&lt;!-- /wp:heading --&gt;&lt;!-- wp:paragraph --&gt;&lt;p&gt;Premium WPC products for modern projects.&lt;/p&gt;&lt;!-- /wp:paragraph --&gt;',
+        )
+    );
+}
+add_action( 'init', 'mysite_register_patterns' );</div>
+      <div class="code-note">Pattern 适合给编辑人员提供可复用版式。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>4. 限制可用区块</h3>
+        <span class="badge">维护</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_allowed_blocks( $allowed_blocks, $editor_context ) {
+    return array(
+        'core/paragraph',
+        'core/heading',
+        'core/image',
+        'core/buttons',
+        'core/columns',
+    );
+}
+add_filter( 'allowed_block_types_all', 'mysite_allowed_blocks', 10, 2 );</div>
+      <div class="code-note">适合交付客户时减少误操作，但要谨慎限制。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>5. 给编辑器加载 JS</h3>
+        <span class="badge">进阶</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_block_editor_assets() {
+    wp_enqueue_script(
+        'mysite-editor',
+        get_stylesheet_directory_uri() . '/assets/js/editor.js',
+        array( 'wp-blocks', 'wp-dom-ready', 'wp-edit-post' ),
+        '1.0.0',
+        true
+    );
+}
+add_action( 'enqueue_block_editor_assets', 'mysite_block_editor_assets' );</div>
+      <div class="code-note">编辑器资源和前台资源要区分加载。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>6. theme.json 示例结构</h3>
+        <span class="badge">结构</span>
+      </div>
+      <div class="code">{
+  "version": 2,
+  "settings": {
+    "color": {
+      "palette": [
+        { "slug": "brand", "color": "#1e3a8a", "name": "Brand" }
+      ]
+    },
+    "spacing": {
+      "units": ["px", "rem", "%"]
+    }
+  }
+}</div>
+      <div class="code-note">区块主题和现代主题常用 theme.json 管理全局样式能力。</div>
+    </article>
+
+    </section>
+
+    <section class="summary-box">
+      <h2>本页总结</h2>
+      <p>Gutenberg 代码不只涉及自定义区块，也包括主题支持、编辑器样式、区块样式、Pattern 和编辑权限控制。</p>
+    </section>
+  </main>
+</body>
+</html>

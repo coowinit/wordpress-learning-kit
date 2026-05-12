@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>02 主题初始化与资源加载</title>
+  <link rel="stylesheet" href="css/common.css">
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="hero-card">
+        <h1>02 主题初始化与资源加载</h1>
+        <p>掌握主题支持、菜单、图片尺寸、CSS/JS 加载、条件加载和本地化脚本。</p>
+      </div>
+      <img src="assets/02-theme-setup-assets.svg" alt="02 主题初始化与资源加载">
+    </section>
+
+    <nav class="nav">
+      <a href="index.html">首页</a>
+      <a href="01-hooks-functions.html">01</a>
+      <a href="02-theme-setup-assets.html">02</a>
+      <a href="03-template-loop-conditions.html">03</a>
+      <a href="04-cpt-taxonomy.html">04</a>
+      <a href="05-media-images.html">05</a>
+      <a href="06-menus-widgets-sidebars.html">06</a>
+      <a href="07-admin-ui-settings.html">07</a>
+      <a href="08-plugin-architecture.html">08</a>
+      <a href="09-shortcodes-content.html">09</a>
+      <a href="10-gutenberg-blocks.html">10</a>
+      <a href="11-elementor-integration.html">11</a>
+      <a href="12-customizer-settings-api.html">12</a>
+      <a href="13-forms-email-ajax.html">13</a>
+      <a href="14-security-permissions.html">14</a>
+      <a href="15-users-roles-capabilities.html">15</a>
+      <a href="16-rest-api-ajax.html">16</a>
+      <a href="17-seo-schema-head.html">17</a>
+      <a href="18-performance-cache.html">18</a>
+      <a href="19-migration-config.html">19</a>
+      <a href="20-debug-testing-maintenance.html">20</a>
+    </nav>
+
+    <section class="card">
+      <h2>本页关键词</h2>
+      <div class="tag-list">
+        <span>after_setup_theme</span>
+        <span>wp_enqueue_scripts</span>
+        <span>add_theme_support</span>
+        <span>wp_localize_script</span>
+        <span>conditional enqueue</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>学习目标</h2>
+      <ul class="checklist">
+        <li>会初始化主题功能</li>
+        <li>会正确加载 CSS 和 JS</li>
+        <li>会按页面条件加载资源</li>
+        <li>会把 PHP 数据传给 JavaScript</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>代码使用提醒</h2>
+      <p>本页代码适合用于学习和研究。复制到正式网站前，请先备份，并优先在测试环境验证。</p>
+      <p>涉及用户输入、后台保存、接口请求、删除操作和邮件发送时，要同时考虑权限、nonce、sanitize、validate 和 escape。</p>
+    </section>
+
+    <section class="code-grid">
+      
+    <article class="code-card">
+      <div class="code-title">
+        <h3>1. 主题初始化：标题、特色图、菜单</h3>
+        <span class="badge">基础</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_theme_setup() {
+    add_theme_support( 'title-tag' );
+    add_theme_support( 'post-thumbnails' );
+    add_theme_support( 'responsive-embeds' );
+    add_theme_support( 'align-wide' );
+
+    register_nav_menus( array(
+        'primary' =&gt; '主导航',
+        'footer'  =&gt; '页脚导航',
+    ) );
+}
+add_action( 'after_setup_theme', 'mysite_theme_setup' );</div>
+      <div class="code-note">after_setup_theme 适合写主题支持、菜单、图片尺寸等初始化代码。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>2. 加载主样式和脚本</h3>
+        <span class="badge">基础</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_enqueue_assets() {
+    wp_enqueue_style(
+        'mysite-style',
+        get_stylesheet_uri(),
+        array(),
+        wp_get_theme()-&gt;get( 'Version' )
+    );
+
+    wp_enqueue_script(
+        'mysite-main',
+        get_stylesheet_directory_uri() . '/assets/js/main.js',
+        array(),
+        wp_get_theme()-&gt;get( 'Version' ),
+        true
+    );
+}
+add_action( 'wp_enqueue_scripts', 'mysite_enqueue_assets' );</div>
+      <div class="code-note">不要在 header.php 里硬写多个 script/link，统一用 enqueue。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>3. 使用 filemtime 解决缓存问题</h3>
+        <span class="badge">实用</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_enqueue_versioned_css() {
+    $file = get_stylesheet_directory() . '/assets/css/site.css';
+
+    wp_enqueue_style(
+        'mysite-site',
+        get_stylesheet_directory_uri() . '/assets/css/site.css',
+        array(),
+        file_exists( $file ) ? filemtime( $file ) : '1.0.0'
+    );
+}
+add_action( 'wp_enqueue_scripts', 'mysite_enqueue_versioned_css' );</div>
+      <div class="code-note">开发阶段常用 filemtime，文件变化后版本号自动变化。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>4. 按需加载：只在联系页面加载表单 JS</h3>
+        <span class="badge">性能</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_enqueue_contact_assets() {
+    if ( ! is_page( 'contact' ) ) {
+        return;
+    }
+
+    wp_enqueue_script(
+        'mysite-contact',
+        get_stylesheet_directory_uri() . '/assets/js/contact.js',
+        array(),
+        '1.0.0',
+        true
+    );
+}
+add_action( 'wp_enqueue_scripts', 'mysite_enqueue_contact_assets' );</div>
+      <div class="code-note">性能优化的关键是：不需要的资源不要加载。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>5. 给 JavaScript 传递 ajax_url 和 nonce</h3>
+        <span class="badge">实用</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_enqueue_ajax_script() {
+    wp_enqueue_script(
+        'mysite-ajax',
+        get_stylesheet_directory_uri() . '/assets/js/ajax.js',
+        array( 'jquery' ),
+        '1.0.0',
+        true
+    );
+
+    wp_localize_script( 'mysite-ajax', 'mysiteAjax', array(
+        'ajaxUrl' =&gt; admin_url( 'admin-ajax.php' ),
+        'nonce'   =&gt; wp_create_nonce( 'mysite_ajax_nonce' ),
+    ) );
+}
+add_action( 'wp_enqueue_scripts', 'mysite_enqueue_ajax_script' );</div>
+      <div class="code-note">wp_localize_script 常用于把 PHP 数据传给前端 JS。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>6. 禁用不需要的区块样式示例</h3>
+        <span class="badge">性能</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_maybe_dequeue_block_styles() {
+    if ( is_front_page() ) {
+        wp_dequeue_style( 'wp-block-library' );
+    }
+}
+add_action( 'wp_enqueue_scripts', 'mysite_maybe_dequeue_block_styles', 100 );</div>
+      <div class="code-note">谨慎使用。禁用前要确认页面没有依赖对应样式。</div>
+    </article>
+
+    </section>
+
+    <section class="summary-box">
+      <h2>本页总结</h2>
+      <p>主题代码最常用的部分是 setup 和 enqueue。资源加载越规范，后期性能优化和维护越容易。</p>
+    </section>
+  </main>
+</body>
+</html>

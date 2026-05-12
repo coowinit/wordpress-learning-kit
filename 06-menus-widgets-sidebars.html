@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>06 菜单、小工具与侧边栏</title>
+  <link rel="stylesheet" href="css/common.css">
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="hero-card">
+        <h1>06 菜单、小工具与侧边栏</h1>
+        <p>整理菜单注册、输出、walker 基础、侧边栏和动态页脚场景。</p>
+      </div>
+      <img src="assets/06-menus-widgets-sidebars.svg" alt="06 菜单、小工具与侧边栏">
+    </section>
+
+    <nav class="nav">
+      <a href="index.html">首页</a>
+      <a href="01-hooks-functions.html">01</a>
+      <a href="02-theme-setup-assets.html">02</a>
+      <a href="03-template-loop-conditions.html">03</a>
+      <a href="04-cpt-taxonomy.html">04</a>
+      <a href="05-media-images.html">05</a>
+      <a href="06-menus-widgets-sidebars.html">06</a>
+      <a href="07-admin-ui-settings.html">07</a>
+      <a href="08-plugin-architecture.html">08</a>
+      <a href="09-shortcodes-content.html">09</a>
+      <a href="10-gutenberg-blocks.html">10</a>
+      <a href="11-elementor-integration.html">11</a>
+      <a href="12-customizer-settings-api.html">12</a>
+      <a href="13-forms-email-ajax.html">13</a>
+      <a href="14-security-permissions.html">14</a>
+      <a href="15-users-roles-capabilities.html">15</a>
+      <a href="16-rest-api-ajax.html">16</a>
+      <a href="17-seo-schema-head.html">17</a>
+      <a href="18-performance-cache.html">18</a>
+      <a href="19-migration-config.html">19</a>
+      <a href="20-debug-testing-maintenance.html">20</a>
+    </nav>
+
+    <section class="card">
+      <h2>本页关键词</h2>
+      <div class="tag-list">
+        <span>register_nav_menus</span>
+        <span>wp_nav_menu</span>
+        <span>register_sidebar</span>
+        <span>dynamic_sidebar</span>
+        <span>walker</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>学习目标</h2>
+      <ul class="checklist">
+        <li>会注册多个菜单位置</li>
+        <li>会输出菜单并控制 HTML</li>
+        <li>会注册侧边栏</li>
+        <li>知道何时使用自定义 walker</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>代码使用提醒</h2>
+      <p>本页代码适合用于学习和研究。复制到正式网站前，请先备份，并优先在测试环境验证。</p>
+      <p>涉及用户输入、后台保存、接口请求、删除操作和邮件发送时，要同时考虑权限、nonce、sanitize、validate 和 escape。</p>
+    </section>
+
+    <section class="code-grid">
+      
+    <article class="code-card">
+      <div class="code-title">
+        <h3>1. 注册多个菜单位置</h3>
+        <span class="badge">基础</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_register_menus() {
+    register_nav_menus( array(
+        'primary' =&gt; '主导航',
+        'mobile'  =&gt; '移动端导航',
+        'footer'  =&gt; '页脚导航',
+    ) );
+}
+add_action( 'after_setup_theme', 'mysite_register_menus' );</div>
+      <div class="code-note">菜单位置 key 不要随意修改，否则后台分配可能失效。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>2. 输出主导航菜单</h3>
+        <span class="badge">基础</span>
+      </div>
+      <div class="code">&lt;?php
+wp_nav_menu( array(
+    'theme_location' =&gt; 'primary',
+    'container'      =&gt; 'nav',
+    'container_class'=&gt; 'site-nav',
+    'menu_class'     =&gt; 'site-nav__list',
+    'fallback_cb'    =&gt; false,
+) );</div>
+      <div class="code-note">fallback_cb=false 可以避免未设置菜单时输出默认页面列表。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>3. 给菜单项添加自定义 class</h3>
+        <span class="badge">实用</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_nav_menu_css_class( $classes, $item, $args, $depth ) {
+    if ( isset( $args-&gt;theme_location ) &amp;&amp; 'primary' === $args-&gt;theme_location ) {
+        $classes[] = 'primary-menu__item';
+    }
+
+    return $classes;
+}
+add_filter( 'nav_menu_css_class', 'mysite_nav_menu_css_class', 10, 4 );</div>
+      <div class="code-note">过滤菜单 class 可以方便统一前端命名。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>4. 注册页脚小工具区域</h3>
+        <span class="badge">基础</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_register_sidebars() {
+    register_sidebar( array(
+        'name'          =&gt; '页脚区域 1',
+        'id'            =&gt; 'footer-1',
+        'before_widget' =&gt; '&lt;section class="footer-widget"&gt;',
+        'after_widget'  =&gt; '&lt;/section&gt;',
+        'before_title'  =&gt; '&lt;h3 class="footer-widget__title"&gt;',
+        'after_title'   =&gt; '&lt;/h3&gt;',
+    ) );
+}
+add_action( 'widgets_init', 'mysite_register_sidebars' );</div>
+      <div class="code-note">侧边栏不仅用于 sidebar，也常用于页脚模块。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>5. 模板中输出小工具区域</h3>
+        <span class="badge">基础</span>
+      </div>
+      <div class="code">&lt;?php if ( is_active_sidebar( 'footer-1' ) ) : ?&gt;
+    &lt;div class="footer-widgets"&gt;
+        &lt;?php dynamic_sidebar( 'footer-1' ); ?&gt;
+    &lt;/div&gt;
+&lt;?php endif; ?&gt;</div>
+      <div class="code-note">输出前先判断 is_active_sidebar，避免空容器。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>6. 根据页面显示不同菜单</h3>
+        <span class="badge">实用</span>
+      </div>
+      <div class="code">&lt;?php
+$location = is_front_page() ? 'primary' : 'mobile';
+
+wp_nav_menu( array(
+    'theme_location' =&gt; $location,
+    'container'      =&gt; 'nav',
+) );</div>
+      <div class="code-note">条件输出适合活动页、落地页或多语言/多地区站点。</div>
+    </article>
+
+    </section>
+
+    <section class="summary-box">
+      <h2>本页总结</h2>
+      <p>菜单和侧边栏是主题可配置区域。会注册、输出和过滤后，就能把很多硬编码内容交给后台维护。</p>
+    </section>
+  </main>
+</body>
+</html>

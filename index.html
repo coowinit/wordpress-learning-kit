@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WordPress Learning Kit - Code Study Edition</title>
+  <link rel="stylesheet" href="css/common.css">
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="hero-card">
+        <h1>WordPress Learning Kit - Code Study Edition</h1>
+        <p>更偏代码研究的 WordPress 学习包：20 个主题页面，120+ 个代码场景，额外提供 snippets PHP 文件，方便后期深入学习。</p>
+      </div>
+      <img src="assets/01-hooks-functions.svg" alt="WordPress Code Study Edition">
+    </section>
+
+    <nav class="nav">
+      <a href="index.html">首页</a>
+      <a href="01-hooks-functions.html">01</a>
+      <a href="02-theme-setup-assets.html">02</a>
+      <a href="03-template-loop-conditions.html">03</a>
+      <a href="04-cpt-taxonomy.html">04</a>
+      <a href="05-media-images.html">05</a>
+      <a href="06-menus-widgets-sidebars.html">06</a>
+      <a href="07-admin-ui-settings.html">07</a>
+      <a href="08-plugin-architecture.html">08</a>
+      <a href="09-shortcodes-content.html">09</a>
+      <a href="10-gutenberg-blocks.html">10</a>
+      <a href="11-elementor-integration.html">11</a>
+      <a href="12-customizer-settings-api.html">12</a>
+      <a href="13-forms-email-ajax.html">13</a>
+      <a href="14-security-permissions.html">14</a>
+      <a href="15-users-roles-capabilities.html">15</a>
+      <a href="16-rest-api-ajax.html">16</a>
+      <a href="17-seo-schema-head.html">17</a>
+      <a href="18-performance-cache.html">18</a>
+      <a href="19-migration-config.html">19</a>
+      <a href="20-debug-testing-maintenance.html">20</a>
+    </nav>
+
+    <section class="card">
+      <h2>学习说明</h2>
+      <p>这个版本重点偏向代码知识，不再只讲后台概念。每个页面都围绕真实使用场景整理多个代码片段，例如 hooks、主题资源、模板、CPT、媒体、菜单、后台设置、插件架构、短代码、Gutenberg、Elementor、表单、AJAX、SEO、安全、性能、迁移和调试。</p>
+      <p>除了 HTML 页面，所有代码也同步整理到了 <strong>snippets/</strong> 文件夹中，方便你用 VS Code 打开研究。</p>
+      <div class="path">
+        <span>120+ code snippets</span>
+        <span>hooks</span>
+        <span>theme development</span>
+        <span>plugin basics</span>
+        <span>security</span>
+        <span>performance</span>
+        <span>debugging</span>
+      </div>
+    </section>
+
+    <section class="warning">
+      <strong>重要提醒：</strong>本学习包中的代码用于学习和研究。复制到正式网站前，请先备份，并优先在测试环境验证。不要把真实数据库密码、API Key、SMTP 密码或客户隐私数据上传到公开仓库。
+    </section>
+
+    <section class="lesson-grid">
+      <a class="lesson-card" href="01-hooks-functions.html">
+        <strong>01 Hooks 与 functions.php</strong>
+        <span>系统理解 action、filter、优先级、参数数量、移除 hook 和自定义 hook。</span>
+      </a>
+      <a class="lesson-card" href="02-theme-setup-assets.html">
+        <strong>02 主题初始化与资源加载</strong>
+        <span>掌握主题支持、菜单、图片尺寸、CSS/JS 加载、条件加载和本地化脚本。</span>
+      </a>
+      <a class="lesson-card" href="03-template-loop-conditions.html">
+        <strong>03 模板、Loop 与条件判断</strong>
+        <span>掌握模板输出、主循环、自定义查询、条件标签和模板片段。</span>
+      </a>
+      <a class="lesson-card" href="04-cpt-taxonomy.html">
+        <strong>04 自定义文章类型与分类法</strong>
+        <span>整理 CPT、taxonomy、rewrite、归档页和后台菜单场景。</span>
+      </a>
+      <a class="lesson-card" href="05-media-images.html">
+        <strong>05 媒体、图片与文件</strong>
+        <span>整理特色图、图片尺寸、附件信息、Alt 文本、上传限制和 SVG 支持场景。</span>
+      </a>
+      <a class="lesson-card" href="06-menus-widgets-sidebars.html">
+        <strong>06 菜单、小工具与侧边栏</strong>
+        <span>整理菜单注册、输出、walker 基础、侧边栏和动态页脚场景。</span>
+      </a>
+      <a class="lesson-card" href="07-admin-ui-settings.html">
+        <strong>07 后台 UI 与设置页</strong>
+        <span>整理后台菜单页、Settings API、Dashboard Widget、Admin Notice 和后台资源加载。</span>
+      </a>
+      <a class="lesson-card" href="08-plugin-architecture.html">
+        <strong>08 插件结构与模块化</strong>
+        <span>整理插件头、目录结构、加载文件、激活停用、卸载和类封装。</span>
+      </a>
+      <a class="lesson-card" href="09-shortcodes-content.html">
+        <strong>09 短代码与内容组件</strong>
+        <span>整理短代码属性、包裹内容、输出缓冲、嵌套短代码和资源按需加载。</span>
+      </a>
+      <a class="lesson-card" href="10-gutenberg-blocks.html">
+        <strong>10 Gutenberg 与区块支持</strong>
+        <span>整理主题支持、编辑器样式、区块样式、区块 Pattern 和禁用区块场景。</span>
+      </a>
+      <a class="lesson-card" href="11-elementor-integration.html">
+        <strong>11 Elementor 代码集成</strong>
+        <span>整理 Elementor 可用的短代码、模板判断、资源加载和常见维护场景。</span>
+      </a>
+      <a class="lesson-card" href="12-customizer-settings-api.html">
+        <strong>12 Customizer 与 Settings API</strong>
+        <span>整理 Customizer、theme_mod、option、sanitize_callback 和前台输出。</span>
+      </a>
+      <a class="lesson-card" href="13-forms-email-ajax.html">
+        <strong>13 表单、邮件与 AJAX</strong>
+        <span>整理 nonce、sanitize、wp_mail、admin-post、admin-ajax、提交记录和邮件模板。</span>
+      </a>
+      <a class="lesson-card" href="14-security-permissions.html">
+        <strong>14 安全、权限与数据处理</strong>
+        <span>整理 capability、nonce、sanitize、validate、escape、$wpdb prepare 和安全删除。</span>
+      </a>
+      <a class="lesson-card" href="15-users-roles-capabilities.html">
+        <strong>15 用户、角色与权限</strong>
+        <span>整理创建角色、添加能力、限制后台菜单、用户字段和登录相关 hooks。</span>
+      </a>
+      <a class="lesson-card" href="16-rest-api-ajax.html">
+        <strong>16 REST API 与 AJAX</strong>
+        <span>整理 admin-ajax、REST 路由、权限回调、nonce 和前端请求场景。</span>
+      </a>
+      <a class="lesson-card" href="17-seo-schema-head.html">
+        <strong>17 SEO、Schema 与 wp_head</strong>
+        <span>整理 meta、canonical、Open Graph、JSON-LD、面包屑和标题过滤场景。</span>
+      </a>
+      <a class="lesson-card" href="18-performance-cache.html">
+        <strong>18 性能、缓存与查询优化</strong>
+        <span>整理 Transients、Object Cache、查询优化、禁用无用资源和 Heartbeat 场景。</span>
+      </a>
+      <a class="lesson-card" href="19-migration-config.html">
+        <strong>19 迁移、配置与环境</strong>
+        <span>整理 wp-config、环境判断、URL 设置、上传路径、search-replace 和维护模式。</span>
+      </a>
+      <a class="lesson-card" href="20-debug-testing-maintenance.html">
+        <strong>20 调试、测试与维护</strong>
+        <span>整理 WP_DEBUG、日志、Query Monitor 思路、错误处理、计划任务和维护清单。</span>
+      </a>
+    </section>
+  </main>
+</body>
+</html>

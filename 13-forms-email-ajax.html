@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>13 表单、邮件与 AJAX</title>
+  <link rel="stylesheet" href="css/common.css">
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="hero-card">
+        <h1>13 表单、邮件与 AJAX</h1>
+        <p>整理 nonce、sanitize、wp_mail、admin-post、admin-ajax、提交记录和邮件模板。</p>
+      </div>
+      <img src="assets/13-forms-email-ajax.svg" alt="13 表单、邮件与 AJAX">
+    </section>
+
+    <nav class="nav">
+      <a href="index.html">首页</a>
+      <a href="01-hooks-functions.html">01</a>
+      <a href="02-theme-setup-assets.html">02</a>
+      <a href="03-template-loop-conditions.html">03</a>
+      <a href="04-cpt-taxonomy.html">04</a>
+      <a href="05-media-images.html">05</a>
+      <a href="06-menus-widgets-sidebars.html">06</a>
+      <a href="07-admin-ui-settings.html">07</a>
+      <a href="08-plugin-architecture.html">08</a>
+      <a href="09-shortcodes-content.html">09</a>
+      <a href="10-gutenberg-blocks.html">10</a>
+      <a href="11-elementor-integration.html">11</a>
+      <a href="12-customizer-settings-api.html">12</a>
+      <a href="13-forms-email-ajax.html">13</a>
+      <a href="14-security-permissions.html">14</a>
+      <a href="15-users-roles-capabilities.html">15</a>
+      <a href="16-rest-api-ajax.html">16</a>
+      <a href="17-seo-schema-head.html">17</a>
+      <a href="18-performance-cache.html">18</a>
+      <a href="19-migration-config.html">19</a>
+      <a href="20-debug-testing-maintenance.html">20</a>
+    </nav>
+
+    <section class="card">
+      <h2>本页关键词</h2>
+      <div class="tag-list">
+        <span>wp_mail</span>
+        <span>nonce</span>
+        <span>admin_post</span>
+        <span>wp_ajax</span>
+        <span>sanitize</span>
+        <span>form</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>学习目标</h2>
+      <ul class="checklist">
+        <li>会处理普通表单提交</li>
+        <li>会处理 AJAX 表单</li>
+        <li>会发送邮件</li>
+        <li>知道如何保存提交记录</li>
+        <li>理解表单安全基本流程</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>代码使用提醒</h2>
+      <p>本页代码适合用于学习和研究。复制到正式网站前，请先备份，并优先在测试环境验证。</p>
+      <p>涉及用户输入、后台保存、接口请求、删除操作和邮件发送时，要同时考虑权限、nonce、sanitize、validate 和 escape。</p>
+    </section>
+
+    <section class="code-grid">
+      
+    <article class="code-card">
+      <div class="code-title">
+        <h3>1. 表单 HTML：nonce 和 action</h3>
+        <span class="badge">基础</span>
+      </div>
+      <div class="code">&lt;form method="post" action="&lt;?php echo esc_url( admin_url( 'admin-post.php' ) ); ?&gt;"&gt;
+    &lt;input type="hidden" name="action" value="mysite_contact_form"&gt;
+    &lt;?php wp_nonce_field( 'mysite_contact_form', 'mysite_contact_nonce' ); ?&gt;
+
+    &lt;input type="text" name="name" placeholder="Name" required&gt;
+    &lt;input type="email" name="email" placeholder="Email" required&gt;
+    &lt;textarea name="message" placeholder="Message"&gt;&lt;/textarea&gt;
+    &lt;button type="submit"&gt;Submit&lt;/button&gt;
+&lt;/form&gt;</div>
+      <div class="code-note">admin-post.php 适合处理普通表单提交。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>2. 处理 admin-post 表单</h3>
+        <span class="badge">基础</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_handle_contact_form() {
+    if ( ! isset( $_POST['mysite_contact_nonce'] ) || ! wp_verify_nonce( $_POST['mysite_contact_nonce'], 'mysite_contact_form' ) ) {
+        wp_die( 'Invalid request.' );
+    }
+
+    $name    = isset( $_POST['name'] ) ? sanitize_text_field( $_POST['name'] ) : '';
+    $email   = isset( $_POST['email'] ) ? sanitize_email( $_POST['email'] ) : '';
+    $message = isset( $_POST['message'] ) ? sanitize_textarea_field( $_POST['message'] ) : '';
+
+    wp_mail(
+        get_option( 'admin_email' ),
+        'New Contact Form Submission',
+        "Name: {$name}\nEmail: {$email}\nMessage:\n{$message}"
+    );
+
+    wp_safe_redirect( home_url( '/thank-you/' ) );
+    exit;
+}
+add_action( 'admin_post_mysite_contact_form', 'mysite_handle_contact_form' );
+add_action( 'admin_post_nopriv_mysite_contact_form', 'mysite_handle_contact_form' );</div>
+      <div class="code-note">nopriv 用于未登录访客提交。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>3. AJAX 表单处理</h3>
+        <span class="badge">进阶</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_ajax_contact_form() {
+    check_ajax_referer( 'mysite_ajax_nonce', 'nonce' );
+
+    $name = isset( $_POST['name'] ) ? sanitize_text_field( $_POST['name'] ) : '';
+
+    if ( empty( $name ) ) {
+        wp_send_json_error( array( 'message' =&gt; 'Name is required.' ) );
+    }
+
+    wp_send_json_success( array( 'message' =&gt; 'Thanks, ' . $name ) );
+}
+add_action( 'wp_ajax_mysite_contact', 'mysite_ajax_contact_form' );
+add_action( 'wp_ajax_nopriv_mysite_contact', 'mysite_ajax_contact_form' );</div>
+      <div class="code-note">AJAX 回调用 wp_send_json_success/error 返回 JSON。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>4. 保存提交记录为 CPT</h3>
+        <span class="badge">进阶</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_save_submission( $name, $email, $message ) {
+    $post_id = wp_insert_post( array(
+        'post_type'   =&gt; 'contact_submission',
+        'post_status' =&gt; 'private',
+        'post_title'  =&gt; $name . ' - ' . current_time( 'mysql' ),
+        'post_content'=&gt; $message,
+    ) );
+
+    if ( $post_id &amp;&amp; ! is_wp_error( $post_id ) ) {
+        update_post_meta( $post_id, '_email', sanitize_email( $email ) );
+    }
+
+    return $post_id;
+}</div>
+      <div class="code-note">重要表单建议保存记录，避免只依赖邮件。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>5. 设置 HTML 邮件内容类型</h3>
+        <span class="badge">邮件</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_set_html_mail_content_type() {
+    return 'text/html';
+}
+
+add_filter( 'wp_mail_content_type', 'mysite_set_html_mail_content_type' );
+
+wp_mail(
+    'admin@example.com',
+    'HTML Email',
+    '&lt;h1&gt;New Submission&lt;/h1&gt;&lt;p&gt;Message content...&lt;/p&gt;'
+);
+
+remove_filter( 'wp_mail_content_type', 'mysite_set_html_mail_content_type' );</div>
+      <div class="code-note">发送后移除 filter，避免影响其他邮件。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>6. 邮件头 Reply-To</h3>
+        <span class="badge">邮件</span>
+      </div>
+      <div class="code">&lt;?php
+$headers = array(
+    'Content-Type: text/plain; charset=UTF-8',
+    'Reply-To: Customer &lt;customer@example.com&gt;',
+);
+
+wp_mail(
+    'sales@example.com',
+    'New Quote Request',
+    'Customer message...',
+    $headers
+);</div>
+      <div class="code-note">Reply-To 可以让销售直接回复客户邮箱。</div>
+    </article>
+
+    </section>
+
+    <section class="summary-box">
+      <h2>本页总结</h2>
+      <p>表单代码要同时考虑安全、送达、记录和反馈。nonce、sanitize、wp_mail、admin-post/AJAX 是必须掌握的核心。</p>
+    </section>
+  </main>
+</body>
+</html>

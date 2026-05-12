@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>16 REST API 与 AJAX</title>
+  <link rel="stylesheet" href="css/common.css">
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="hero-card">
+        <h1>16 REST API 与 AJAX</h1>
+        <p>整理 admin-ajax、REST 路由、权限回调、nonce 和前端请求场景。</p>
+      </div>
+      <img src="assets/16-rest-api-ajax.svg" alt="16 REST API 与 AJAX">
+    </section>
+
+    <nav class="nav">
+      <a href="index.html">首页</a>
+      <a href="01-hooks-functions.html">01</a>
+      <a href="02-theme-setup-assets.html">02</a>
+      <a href="03-template-loop-conditions.html">03</a>
+      <a href="04-cpt-taxonomy.html">04</a>
+      <a href="05-media-images.html">05</a>
+      <a href="06-menus-widgets-sidebars.html">06</a>
+      <a href="07-admin-ui-settings.html">07</a>
+      <a href="08-plugin-architecture.html">08</a>
+      <a href="09-shortcodes-content.html">09</a>
+      <a href="10-gutenberg-blocks.html">10</a>
+      <a href="11-elementor-integration.html">11</a>
+      <a href="12-customizer-settings-api.html">12</a>
+      <a href="13-forms-email-ajax.html">13</a>
+      <a href="14-security-permissions.html">14</a>
+      <a href="15-users-roles-capabilities.html">15</a>
+      <a href="16-rest-api-ajax.html">16</a>
+      <a href="17-seo-schema-head.html">17</a>
+      <a href="18-performance-cache.html">18</a>
+      <a href="19-migration-config.html">19</a>
+      <a href="20-debug-testing-maintenance.html">20</a>
+    </nav>
+
+    <section class="card">
+      <h2>本页关键词</h2>
+      <div class="tag-list">
+        <span>REST API</span>
+        <span>register_rest_route</span>
+        <span>admin-ajax</span>
+        <span>permission_callback</span>
+        <span>nonce</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>学习目标</h2>
+      <ul class="checklist">
+        <li>会写 admin-ajax 回调</li>
+        <li>会注册 REST API 路由</li>
+        <li>理解 permission_callback</li>
+        <li>会在前端请求接口</li>
+        <li>知道 AJAX 与 REST 的区别</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>代码使用提醒</h2>
+      <p>本页代码适合用于学习和研究。复制到正式网站前，请先备份，并优先在测试环境验证。</p>
+      <p>涉及用户输入、后台保存、接口请求、删除操作和邮件发送时，要同时考虑权限、nonce、sanitize、validate 和 escape。</p>
+    </section>
+
+    <section class="code-grid">
+      
+    <article class="code-card">
+      <div class="code-title">
+        <h3>1. admin-ajax 基础回调</h3>
+        <span class="badge">基础</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_ajax_get_message() {
+    check_ajax_referer( 'mysite_ajax_nonce', 'nonce' );
+
+    wp_send_json_success( array(
+        'message' =&gt; 'Hello from WordPress AJAX.',
+    ) );
+}
+add_action( 'wp_ajax_mysite_get_message', 'mysite_ajax_get_message' );
+add_action( 'wp_ajax_nopriv_mysite_get_message', 'mysite_ajax_get_message' );</div>
+      <div class="code-note">admin-ajax 适合传统 WordPress AJAX。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>2. 前端 fetch 请求 admin-ajax</h3>
+        <span class="badge">前端</span>
+      </div>
+      <div class="code">fetch(mysiteAjax.ajaxUrl, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  body: new URLSearchParams({
+    action: 'mysite_get_message',
+    nonce: mysiteAjax.nonce
+  })
+})
+.then(response =&gt; response.json())
+.then(data =&gt; console.log(data));</div>
+      <div class="code-note">ajaxUrl 和 nonce 可通过 wp_localize_script 传递。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>3. 注册 REST API 路由</h3>
+        <span class="badge">进阶</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_register_rest_routes() {
+    register_rest_route( 'mysite/v1', '/products', array(
+        'methods'             =&gt; 'GET',
+        'callback'            =&gt; 'mysite_rest_get_products',
+        'permission_callback' =&gt; '__return_true',
+    ) );
+}
+add_action( 'rest_api_init', 'mysite_register_rest_routes' );
+
+function mysite_rest_get_products() {
+    return rest_ensure_response( array(
+        'items' =&gt; array(
+            array( 'title' =&gt; 'Product 01' ),
+        ),
+    ) );
+}</div>
+      <div class="code-note">公开 GET 接口可以 permission_callback 为 __return_true。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>4. REST 权限控制</h3>
+        <span class="badge">安全</span>
+      </div>
+      <div class="code">&lt;?php
+register_rest_route( 'mysite/v1', '/settings', array(
+    'methods'  =&gt; 'POST',
+    'callback' =&gt; 'mysite_rest_save_settings',
+    'permission_callback' =&gt; function () {
+        return current_user_can( 'manage_options' );
+    },
+) );</div>
+      <div class="code-note">修改数据的 REST 接口必须有权限控制。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>5. REST 参数清理</h3>
+        <span class="badge">安全</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_rest_save_settings( WP_REST_Request $request ) {
+    $phone = sanitize_text_field( $request-&gt;get_param( 'phone' ) );
+
+    update_option( 'mysite_phone', $phone );
+
+    return rest_ensure_response( array(
+        'success' =&gt; true,
+    ) );
+}</div>
+      <div class="code-note">REST 请求参数也需要 sanitize/validate。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>6. 前端请求 REST API</h3>
+        <span class="badge">前端</span>
+      </div>
+      <div class="code">fetch('/wp-json/mysite/v1/products')
+  .then(response =&gt; response.json())
+  .then(data =&gt; {
+    console.log(data.items);
+  });</div>
+      <div class="code-note">REST API 更适合结构化数据接口。</div>
+    </article>
+
+    </section>
+
+    <section class="summary-box">
+      <h2>本页总结</h2>
+      <p>AJAX 和 REST 都能处理异步请求。admin-ajax 更传统，REST 更适合结构化接口；二者都必须重视 nonce、权限和数据处理。</p>
+    </section>
+  </main>
+</body>
+</html>

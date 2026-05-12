@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>17 SEO、Schema 与 wp_head</title>
+  <link rel="stylesheet" href="css/common.css">
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="hero-card">
+        <h1>17 SEO、Schema 与 wp_head</h1>
+        <p>整理 meta、canonical、Open Graph、JSON-LD、面包屑和标题过滤场景。</p>
+      </div>
+      <img src="assets/17-seo-schema-head.svg" alt="17 SEO、Schema 与 wp_head">
+    </section>
+
+    <nav class="nav">
+      <a href="index.html">首页</a>
+      <a href="01-hooks-functions.html">01</a>
+      <a href="02-theme-setup-assets.html">02</a>
+      <a href="03-template-loop-conditions.html">03</a>
+      <a href="04-cpt-taxonomy.html">04</a>
+      <a href="05-media-images.html">05</a>
+      <a href="06-menus-widgets-sidebars.html">06</a>
+      <a href="07-admin-ui-settings.html">07</a>
+      <a href="08-plugin-architecture.html">08</a>
+      <a href="09-shortcodes-content.html">09</a>
+      <a href="10-gutenberg-blocks.html">10</a>
+      <a href="11-elementor-integration.html">11</a>
+      <a href="12-customizer-settings-api.html">12</a>
+      <a href="13-forms-email-ajax.html">13</a>
+      <a href="14-security-permissions.html">14</a>
+      <a href="15-users-roles-capabilities.html">15</a>
+      <a href="16-rest-api-ajax.html">16</a>
+      <a href="17-seo-schema-head.html">17</a>
+      <a href="18-performance-cache.html">18</a>
+      <a href="19-migration-config.html">19</a>
+      <a href="20-debug-testing-maintenance.html">20</a>
+    </nav>
+
+    <section class="card">
+      <h2>本页关键词</h2>
+      <div class="tag-list">
+        <span>wp_head</span>
+        <span>meta</span>
+        <span>schema</span>
+        <span>JSON-LD</span>
+        <span>document_title_parts</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>学习目标</h2>
+      <ul class="checklist">
+        <li>会输出基础 meta</li>
+        <li>理解避免和 SEO 插件冲突</li>
+        <li>会输出 JSON-LD</li>
+        <li>会做简单面包屑</li>
+        <li>知道标题过滤方式</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>代码使用提醒</h2>
+      <p>本页代码适合用于学习和研究。复制到正式网站前，请先备份，并优先在测试环境验证。</p>
+      <p>涉及用户输入、后台保存、接口请求、删除操作和邮件发送时，要同时考虑权限、nonce、sanitize、validate 和 escape。</p>
+    </section>
+
+    <section class="code-grid">
+      
+    <article class="code-card">
+      <div class="code-title">
+        <h3>1. 页面 meta description</h3>
+        <span class="badge">基础</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_meta_description() {
+    if ( is_singular() ) {
+        $desc = get_the_excerpt();
+
+        if ( $desc ) {
+            echo '&lt;meta name="description" content="' . esc_attr( wp_strip_all_tags( $desc ) ) . '"&gt;' . "\n";
+        }
+    }
+}
+add_action( 'wp_head', 'mysite_meta_description' );</div>
+      <div class="code-note">如果使用 SEO 插件，要避免重复输出。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>2. Canonical URL</h3>
+        <span class="badge">SEO</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_canonical_url() {
+    if ( is_singular() ) {
+        echo '&lt;link rel="canonical" href="' . esc_url( get_permalink() ) . '"&gt;' . "\n";
+    }
+}
+add_action( 'wp_head', 'mysite_canonical_url' );</div>
+      <div class="code-note">SEO 插件通常会处理 canonical，不要重复。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>3. Open Graph 基础信息</h3>
+        <span class="badge">SEO</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_open_graph_tags() {
+    if ( ! is_singular() ) {
+        return;
+    }
+
+    echo '&lt;meta property="og:title" content="' . esc_attr( get_the_title() ) . '"&gt;' . "\n";
+    echo '&lt;meta property="og:url" content="' . esc_url( get_permalink() ) . '"&gt;' . "\n";
+
+    if ( has_post_thumbnail() ) {
+        echo '&lt;meta property="og:image" content="' . esc_url( get_the_post_thumbnail_url( null, 'large' ) ) . '"&gt;' . "\n";
+    }
+}
+add_action( 'wp_head', 'mysite_open_graph_tags' );</div>
+      <div class="code-note">社交分享信息可用 OG 标签控制。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>4. JSON-LD Organization 示例</h3>
+        <span class="badge">Schema</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_organization_schema() {
+    $data = array(
+        '@context' =&gt; 'https://schema.org',
+        '@type'    =&gt; 'Organization',
+        'name'     =&gt; get_bloginfo( 'name' ),
+        'url'      =&gt; home_url( '/' ),
+    );
+
+    echo '&lt;script type="application/ld+json"&gt;' . wp_json_encode( $data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) . '&lt;/script&gt;';
+}
+add_action( 'wp_head', 'mysite_organization_schema' );</div>
+      <div class="code-note">JSON-LD 建议用 wp_json_encode 生成。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>5. 修改文档标题 parts</h3>
+        <span class="badge">SEO</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_document_title_parts( $title ) {
+    if ( is_front_page() ) {
+        $title['tagline'] = 'Premium Outdoor Building Materials';
+    }
+
+    return $title;
+}
+add_filter( 'document_title_parts', 'mysite_document_title_parts' );</div>
+      <div class="code-note">title-tag 主题支持开启后，可以过滤文档标题 parts。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>6. 简单面包屑输出</h3>
+        <span class="badge">导航</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_breadcrumbs() {
+    echo '&lt;nav class="breadcrumbs"&gt;&lt;a href="' . esc_url( home_url( '/' ) ) . '"&gt;Home&lt;/a&gt;';
+
+    if ( is_singular() ) {
+        echo ' / &lt;span&gt;' . esc_html( get_the_title() ) . '&lt;/span&gt;';
+    }
+
+    echo '&lt;/nav&gt;';
+}</div>
+      <div class="code-note">复杂项目建议用 SEO 插件或更完整的面包屑逻辑。</div>
+    </article>
+
+    </section>
+
+    <section class="summary-box">
+      <h2>本页总结</h2>
+      <p>SEO 代码可以处理 meta、OG、Schema 和标题，但如果已使用 SEO 插件，要避免重复输出和冲突。</p>
+    </section>
+  </main>
+</body>
+</html>

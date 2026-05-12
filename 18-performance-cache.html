@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>18 性能、缓存与查询优化</title>
+  <link rel="stylesheet" href="css/common.css">
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="hero-card">
+        <h1>18 性能、缓存与查询优化</h1>
+        <p>整理 Transients、Object Cache、查询优化、禁用无用资源和 Heartbeat 场景。</p>
+      </div>
+      <img src="assets/18-performance-cache.svg" alt="18 性能、缓存与查询优化">
+    </section>
+
+    <nav class="nav">
+      <a href="index.html">首页</a>
+      <a href="01-hooks-functions.html">01</a>
+      <a href="02-theme-setup-assets.html">02</a>
+      <a href="03-template-loop-conditions.html">03</a>
+      <a href="04-cpt-taxonomy.html">04</a>
+      <a href="05-media-images.html">05</a>
+      <a href="06-menus-widgets-sidebars.html">06</a>
+      <a href="07-admin-ui-settings.html">07</a>
+      <a href="08-plugin-architecture.html">08</a>
+      <a href="09-shortcodes-content.html">09</a>
+      <a href="10-gutenberg-blocks.html">10</a>
+      <a href="11-elementor-integration.html">11</a>
+      <a href="12-customizer-settings-api.html">12</a>
+      <a href="13-forms-email-ajax.html">13</a>
+      <a href="14-security-permissions.html">14</a>
+      <a href="15-users-roles-capabilities.html">15</a>
+      <a href="16-rest-api-ajax.html">16</a>
+      <a href="17-seo-schema-head.html">17</a>
+      <a href="18-performance-cache.html">18</a>
+      <a href="19-migration-config.html">19</a>
+      <a href="20-debug-testing-maintenance.html">20</a>
+    </nav>
+
+    <section class="card">
+      <h2>本页关键词</h2>
+      <div class="tag-list">
+        <span>transient</span>
+        <span>cache</span>
+        <span>WP_Query</span>
+        <span>dequeue</span>
+        <span>heartbeat</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>学习目标</h2>
+      <ul class="checklist">
+        <li>会使用 transient 缓存</li>
+        <li>会优化查询参数</li>
+        <li>会按需禁用资源</li>
+        <li>知道后台 Heartbeat 调整</li>
+        <li>理解缓存失效</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>代码使用提醒</h2>
+      <p>本页代码适合用于学习和研究。复制到正式网站前，请先备份，并优先在测试环境验证。</p>
+      <p>涉及用户输入、后台保存、接口请求、删除操作和邮件发送时，要同时考虑权限、nonce、sanitize、validate 和 escape。</p>
+    </section>
+
+    <section class="code-grid">
+      
+    <article class="code-card">
+      <div class="code-title">
+        <h3>1. Transient 缓存查询结果</h3>
+        <span class="badge">缓存</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_get_featured_posts_cached() {
+    $cached = get_transient( 'mysite_featured_posts' );
+
+    if ( false !== $cached ) {
+        return $cached;
+    }
+
+    $posts = get_posts( array(
+        'posts_per_page' =&gt; 5,
+        'meta_key'       =&gt; '_featured',
+        'meta_value'     =&gt; '1',
+    ) );
+
+    set_transient( 'mysite_featured_posts', $posts, HOUR_IN_SECONDS );
+
+    return $posts;
+}</div>
+      <div class="code-note">Transient 适合缓存不需要每次实时计算的数据。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>2. 保存文章时清理缓存</h3>
+        <span class="badge">缓存</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_clear_featured_posts_cache() {
+    delete_transient( 'mysite_featured_posts' );
+}
+add_action( 'save_post', 'mysite_clear_featured_posts_cache' );</div>
+      <div class="code-note">有缓存就要考虑什么时候失效。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>3. 优化 WP_Query 参数</h3>
+        <span class="badge">查询</span>
+      </div>
+      <div class="code">&lt;?php
+$q = new WP_Query( array(
+    'post_type'              =&gt; 'post',
+    'posts_per_page'         =&gt; 6,
+    'no_found_rows'          =&gt; true,
+    'ignore_sticky_posts'    =&gt; true,
+    'update_post_meta_cache' =&gt; false,
+    'update_post_term_cache' =&gt; false,
+) );</div>
+      <div class="code-note">不需要分页、不需要 meta/term 时，可以减少查询负担。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>4. 只在需要页面加载重资源</h3>
+        <span class="badge">性能</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_load_map_assets() {
+    if ( ! is_page( 'contact' ) ) {
+        return;
+    }
+
+    wp_enqueue_script( 'mysite-map', get_stylesheet_directory_uri() . '/assets/js/map.js', array(), '1.0.0', true );
+}
+add_action( 'wp_enqueue_scripts', 'mysite_load_map_assets' );</div>
+      <div class="code-note">地图、轮播、动画脚本都适合按需加载。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>5. 移除 emoji 脚本</h3>
+        <span class="badge">性能</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_disable_emoji_assets() {
+    remove_action( 'wp_head', 'print_emoji_detection_script', 7 );
+    remove_action( 'wp_print_styles', 'print_emoji_styles' );
+}
+add_action( 'init', 'mysite_disable_emoji_assets' );</div>
+      <div class="code-note">适合不使用 emoji 功能的网站。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>6. 调整 Heartbeat 频率</h3>
+        <span class="badge">后台</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_heartbeat_settings( $settings ) {
+    $settings['interval'] = 60;
+    return $settings;
+}
+add_filter( 'heartbeat_settings', 'mysite_heartbeat_settings' );</div>
+      <div class="code-note">Heartbeat 影响后台自动保存、锁定等功能，不要盲目关闭。</div>
+    </article>
+
+    </section>
+
+    <section class="summary-box">
+      <h2>本页总结</h2>
+      <p>性能优化不是只装缓存插件。代码层面要掌握按需加载、查询优化、缓存和缓存失效。</p>
+    </section>
+  </main>
+</body>
+</html>

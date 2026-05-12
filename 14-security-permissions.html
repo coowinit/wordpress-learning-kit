@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>14 安全、权限与数据处理</title>
+  <link rel="stylesheet" href="css/common.css">
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="hero-card">
+        <h1>14 安全、权限与数据处理</h1>
+        <p>整理 capability、nonce、sanitize、validate、escape、$wpdb prepare 和安全删除。</p>
+      </div>
+      <img src="assets/14-security-permissions.svg" alt="14 安全、权限与数据处理">
+    </section>
+
+    <nav class="nav">
+      <a href="index.html">首页</a>
+      <a href="01-hooks-functions.html">01</a>
+      <a href="02-theme-setup-assets.html">02</a>
+      <a href="03-template-loop-conditions.html">03</a>
+      <a href="04-cpt-taxonomy.html">04</a>
+      <a href="05-media-images.html">05</a>
+      <a href="06-menus-widgets-sidebars.html">06</a>
+      <a href="07-admin-ui-settings.html">07</a>
+      <a href="08-plugin-architecture.html">08</a>
+      <a href="09-shortcodes-content.html">09</a>
+      <a href="10-gutenberg-blocks.html">10</a>
+      <a href="11-elementor-integration.html">11</a>
+      <a href="12-customizer-settings-api.html">12</a>
+      <a href="13-forms-email-ajax.html">13</a>
+      <a href="14-security-permissions.html">14</a>
+      <a href="15-users-roles-capabilities.html">15</a>
+      <a href="16-rest-api-ajax.html">16</a>
+      <a href="17-seo-schema-head.html">17</a>
+      <a href="18-performance-cache.html">18</a>
+      <a href="19-migration-config.html">19</a>
+      <a href="20-debug-testing-maintenance.html">20</a>
+    </nav>
+
+    <section class="card">
+      <h2>本页关键词</h2>
+      <div class="tag-list">
+        <span>current_user_can</span>
+        <span>wp_nonce</span>
+        <span>sanitize</span>
+        <span>escape</span>
+        <span>wpdb prepare</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>学习目标</h2>
+      <ul class="checklist">
+        <li>会做权限检查</li>
+        <li>会使用 nonce</li>
+        <li>会清理输入和转义输出</li>
+        <li>会安全写 SQL</li>
+        <li>知道删除操作要谨慎</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>代码使用提醒</h2>
+      <p>本页代码适合用于学习和研究。复制到正式网站前，请先备份，并优先在测试环境验证。</p>
+      <p>涉及用户输入、后台保存、接口请求、删除操作和邮件发送时，要同时考虑权限、nonce、sanitize、validate 和 escape。</p>
+    </section>
+
+    <section class="code-grid">
+      
+    <article class="code-card">
+      <div class="code-title">
+        <h3>1. 权限检查</h3>
+        <span class="badge">基础</span>
+      </div>
+      <div class="code">&lt;?php
+if ( ! current_user_can( 'manage_options' ) ) {
+    wp_die( 'You do not have permission.' );
+}</div>
+      <div class="code-note">后台敏感操作必须检查 capability。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>2. 创建和验证 nonce</h3>
+        <span class="badge">基础</span>
+      </div>
+      <div class="code">&lt;?php
+// 输出
+wp_nonce_field( 'delete_item_action', 'delete_item_nonce' );
+
+// 验证
+if ( ! isset( $_POST['delete_item_nonce'] ) || ! wp_verify_nonce( $_POST['delete_item_nonce'], 'delete_item_action' ) ) {
+    wp_die( 'Invalid nonce.' );
+}</div>
+      <div class="code-note">nonce 防止跨站请求伪造，不替代权限检查。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>3. sanitize 输入</h3>
+        <span class="badge">基础</span>
+      </div>
+      <div class="code">&lt;?php
+$name  = isset( $_POST['name'] ) ? sanitize_text_field( $_POST['name'] ) : '';
+$email = isset( $_POST['email'] ) ? sanitize_email( $_POST['email'] ) : '';
+$url   = isset( $_POST['url'] ) ? esc_url_raw( $_POST['url'] ) : '';
+$text  = isset( $_POST['message'] ) ? sanitize_textarea_field( $_POST['message'] ) : '';</div>
+      <div class="code-note">不同类型数据使用不同清理函数。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>4. escape 输出</h3>
+        <span class="badge">基础</span>
+      </div>
+      <div class="code">&lt;?php
+echo '&lt;p&gt;' . esc_html( $name ) . '&lt;/p&gt;';
+echo '&lt;input value="' . esc_attr( $name ) . '"&gt;';
+echo '&lt;a href="' . esc_url( $url ) . '"&gt;Visit&lt;/a&gt;';
+echo wp_kses_post( $allowed_html_content );</div>
+      <div class="code-note">输出到不同位置，用不同 escape 函数。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>5. 验证白名单参数</h3>
+        <span class="badge">实用</span>
+      </div>
+      <div class="code">&lt;?php
+$allowed_orderby = array( 'date', 'title', 'menu_order' );
+$orderby = isset( $_GET['orderby'] ) ? sanitize_key( $_GET['orderby'] ) : 'date';
+
+if ( ! in_array( $orderby, $allowed_orderby, true ) ) {
+    $orderby = 'date';
+}</div>
+      <div class="code-note">验证比清理更具体。白名单是很常用的安全方式。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>6. $wpdb prepare 查询</h3>
+        <span class="badge">进阶</span>
+      </div>
+      <div class="code">&lt;?php
+global $wpdb;
+
+$email = 'customer@example.com';
+
+$row = $wpdb-&gt;get_row(
+    $wpdb-&gt;prepare(
+        "SELECT * FROM {$wpdb-&gt;users} WHERE user_email = %s",
+        $email
+    )
+);</div>
+      <div class="code-note">拼 SQL 时必须 prepare，不要直接拼接用户输入。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>7. 安全删除操作流程</h3>
+        <span class="badge">实用</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_delete_item() {
+    if ( ! current_user_can( 'manage_options' ) ) {
+        wp_die( 'No permission.' );
+    }
+
+    check_admin_referer( 'mysite_delete_item' );
+
+    $item_id = isset( $_GET['item_id'] ) ? absint( $_GET['item_id'] ) : 0;
+
+    if ( $item_id ) {
+        wp_delete_post( $item_id, true );
+    }
+
+    wp_safe_redirect( admin_url( 'admin.php?page=mysite-items' ) );
+    exit;
+}</div>
+      <div class="code-note">删除操作至少要有权限、nonce、ID 类型处理和安全跳转。</div>
+    </article>
+
+    </section>
+
+    <section class="summary-box">
+      <h2>本页总结</h2>
+      <p>安全代码的核心顺序是：权限检查 → nonce 验证 → 输入清理/验证 → 安全处理 → 输出转义。</p>
+    </section>
+  </main>
+</body>
+</html>

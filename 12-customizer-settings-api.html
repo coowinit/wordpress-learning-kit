@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>12 Customizer 与 Settings API</title>
+  <link rel="stylesheet" href="css/common.css">
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="hero-card">
+        <h1>12 Customizer 与 Settings API</h1>
+        <p>整理 Customizer、theme_mod、option、sanitize_callback 和前台输出。</p>
+      </div>
+      <img src="assets/12-customizer-settings-api.svg" alt="12 Customizer 与 Settings API">
+    </section>
+
+    <nav class="nav">
+      <a href="index.html">首页</a>
+      <a href="01-hooks-functions.html">01</a>
+      <a href="02-theme-setup-assets.html">02</a>
+      <a href="03-template-loop-conditions.html">03</a>
+      <a href="04-cpt-taxonomy.html">04</a>
+      <a href="05-media-images.html">05</a>
+      <a href="06-menus-widgets-sidebars.html">06</a>
+      <a href="07-admin-ui-settings.html">07</a>
+      <a href="08-plugin-architecture.html">08</a>
+      <a href="09-shortcodes-content.html">09</a>
+      <a href="10-gutenberg-blocks.html">10</a>
+      <a href="11-elementor-integration.html">11</a>
+      <a href="12-customizer-settings-api.html">12</a>
+      <a href="13-forms-email-ajax.html">13</a>
+      <a href="14-security-permissions.html">14</a>
+      <a href="15-users-roles-capabilities.html">15</a>
+      <a href="16-rest-api-ajax.html">16</a>
+      <a href="17-seo-schema-head.html">17</a>
+      <a href="18-performance-cache.html">18</a>
+      <a href="19-migration-config.html">19</a>
+      <a href="20-debug-testing-maintenance.html">20</a>
+    </nav>
+
+    <section class="card">
+      <h2>本页关键词</h2>
+      <div class="tag-list">
+        <span>customize_register</span>
+        <span>get_theme_mod</span>
+        <span>register_setting</span>
+        <span>sanitize_callback</span>
+        <span>options</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>学习目标</h2>
+      <ul class="checklist">
+        <li>会添加 Customizer 设置</li>
+        <li>会用 Settings API 保存 option</li>
+        <li>理解 theme_mod 与 option 的区别</li>
+        <li>会安全输出设置值</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>代码使用提醒</h2>
+      <p>本页代码适合用于学习和研究。复制到正式网站前，请先备份，并优先在测试环境验证。</p>
+      <p>涉及用户输入、后台保存、接口请求、删除操作和邮件发送时，要同时考虑权限、nonce、sanitize、validate 和 escape。</p>
+    </section>
+
+    <section class="code-grid">
+      
+    <article class="code-card">
+      <div class="code-title">
+        <h3>1. 添加 Customizer 文本设置</h3>
+        <span class="badge">基础</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_customize_register( $wp_customize ) {
+    $wp_customize-&gt;add_setting( 'mysite_footer_text', array(
+        'default'           =&gt; '© My Website',
+        'sanitize_callback' =&gt; 'sanitize_text_field',
+    ) );
+
+    $wp_customize-&gt;add_control( 'mysite_footer_text', array(
+        'label'   =&gt; '页脚版权文字',
+        'section' =&gt; 'title_tagline',
+        'type'    =&gt; 'text',
+    ) );
+}
+add_action( 'customize_register', 'mysite_customize_register' );</div>
+      <div class="code-note">Customizer 适合主题外观相关设置。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>2. 前台输出 theme_mod</h3>
+        <span class="badge">基础</span>
+      </div>
+      <div class="code">&lt;?php
+$footer_text = get_theme_mod( 'mysite_footer_text', '© My Website' );
+
+echo '&lt;p class="copyright"&gt;' . esc_html( $footer_text ) . '&lt;/p&gt;';</div>
+      <div class="code-note">前台输出必须 escape。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>3. 添加颜色设置</h3>
+        <span class="badge">实用</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_customize_color( $wp_customize ) {
+    $wp_customize-&gt;add_setting( 'mysite_brand_color', array(
+        'default'           =&gt; '#1e3a8a',
+        'sanitize_callback' =&gt; 'sanitize_hex_color',
+    ) );
+
+    $wp_customize-&gt;add_control(
+        new WP_Customize_Color_Control(
+            $wp_customize,
+            'mysite_brand_color',
+            array(
+                'label'   =&gt; '品牌颜色',
+                'section' =&gt; 'colors',
+            )
+        )
+    );
+}
+add_action( 'customize_register', 'mysite_customize_color' );</div>
+      <div class="code-note">颜色值使用 sanitize_hex_color 更合适。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>4. 输出动态 CSS</h3>
+        <span class="badge">实用</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_output_customizer_css() {
+    $color = get_theme_mod( 'mysite_brand_color', '#1e3a8a' );
+    ?&gt;
+    &lt;style&gt;
+        :root {
+            --brand-color: &lt;?php echo esc_html( $color ); ?&gt;;
+        }
+    &lt;/style&gt;
+    &lt;?php
+}
+add_action( 'wp_head', 'mysite_output_customizer_css' );</div>
+      <div class="code-note">输出 CSS 时也要确保值经过合适清理。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>5. Settings API 保存 option</h3>
+        <span class="badge">进阶</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_register_options() {
+    register_setting( 'mysite_options', 'mysite_phone', array(
+        'type'              =&gt; 'string',
+        'sanitize_callback' =&gt; 'sanitize_text_field',
+        'default'           =&gt; '',
+    ) );
+}
+add_action( 'admin_init', 'mysite_register_options' );</div>
+      <div class="code-note">option 更适合插件或功能设置；theme_mod 更偏主题外观。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>6. 读取 option 并输出</h3>
+        <span class="badge">基础</span>
+      </div>
+      <div class="code">&lt;?php
+$phone = get_option( 'mysite_phone', '' );
+
+if ( $phone ) {
+    echo '&lt;a href="tel:' . esc_attr( preg_replace( '/[^0-9+]/', '', $phone ) ) . '"&gt;' . esc_html( $phone ) . '&lt;/a&gt;';
+}</div>
+      <div class="code-note">电话链接 href 和显示文本要分别处理。</div>
+    </article>
+
+    </section>
+
+    <section class="summary-box">
+      <h2>本页总结</h2>
+      <p>Customizer 和 Settings API 都能保存设置。主题外观偏 theme_mod，功能配置偏 option，核心都是 sanitize 和 escape。</p>
+    </section>
+  </main>
+</body>
+</html>

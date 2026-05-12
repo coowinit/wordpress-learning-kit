@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>05 媒体、图片与文件</title>
+  <link rel="stylesheet" href="css/common.css">
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="hero-card">
+        <h1>05 媒体、图片与文件</h1>
+        <p>整理特色图、图片尺寸、附件信息、Alt 文本、上传限制和 SVG 支持场景。</p>
+      </div>
+      <img src="assets/05-media-images.svg" alt="05 媒体、图片与文件">
+    </section>
+
+    <nav class="nav">
+      <a href="index.html">首页</a>
+      <a href="01-hooks-functions.html">01</a>
+      <a href="02-theme-setup-assets.html">02</a>
+      <a href="03-template-loop-conditions.html">03</a>
+      <a href="04-cpt-taxonomy.html">04</a>
+      <a href="05-media-images.html">05</a>
+      <a href="06-menus-widgets-sidebars.html">06</a>
+      <a href="07-admin-ui-settings.html">07</a>
+      <a href="08-plugin-architecture.html">08</a>
+      <a href="09-shortcodes-content.html">09</a>
+      <a href="10-gutenberg-blocks.html">10</a>
+      <a href="11-elementor-integration.html">11</a>
+      <a href="12-customizer-settings-api.html">12</a>
+      <a href="13-forms-email-ajax.html">13</a>
+      <a href="14-security-permissions.html">14</a>
+      <a href="15-users-roles-capabilities.html">15</a>
+      <a href="16-rest-api-ajax.html">16</a>
+      <a href="17-seo-schema-head.html">17</a>
+      <a href="18-performance-cache.html">18</a>
+      <a href="19-migration-config.html">19</a>
+      <a href="20-debug-testing-maintenance.html">20</a>
+    </nav>
+
+    <section class="card">
+      <h2>本页关键词</h2>
+      <div class="tag-list">
+        <span>post thumbnails</span>
+        <span>add_image_size</span>
+        <span>wp_get_attachment_image</span>
+        <span>upload_mimes</span>
+        <span>alt</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>学习目标</h2>
+      <ul class="checklist">
+        <li>会启用特色图</li>
+        <li>会注册并输出图片尺寸</li>
+        <li>会读取附件 Alt</li>
+        <li>理解上传类型控制</li>
+        <li>知道 SVG 支持要谨慎</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>代码使用提醒</h2>
+      <p>本页代码适合用于学习和研究。复制到正式网站前，请先备份，并优先在测试环境验证。</p>
+      <p>涉及用户输入、后台保存、接口请求、删除操作和邮件发送时，要同时考虑权限、nonce、sanitize、validate 和 escape。</p>
+    </section>
+
+    <section class="code-grid">
+      
+    <article class="code-card">
+      <div class="code-title">
+        <h3>1. 启用特色图和自定义图片尺寸</h3>
+        <span class="badge">基础</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_image_setup() {
+    add_theme_support( 'post-thumbnails' );
+    add_image_size( 'hero-banner', 1600, 700, true );
+    add_image_size( 'product-card', 600, 420, true );
+}
+add_action( 'after_setup_theme', 'mysite_image_setup' );</div>
+      <div class="code-note">新增图片尺寸后，旧图通常需要重新生成缩略图。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>2. 输出特色图并添加 class</h3>
+        <span class="badge">基础</span>
+      </div>
+      <div class="code">&lt;?php
+if ( has_post_thumbnail() ) {
+    the_post_thumbnail( 'product-card', array(
+        'class' =&gt; 'product-card__image',
+        'loading' =&gt; 'lazy',
+    ) );
+}</div>
+      <div class="code-note">the_post_thumbnail 可以传尺寸和属性数组。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>3. 用 wp_get_attachment_image 输出图片</h3>
+        <span class="badge">实用</span>
+      </div>
+      <div class="code">&lt;?php
+$image_id = get_post_thumbnail_id();
+
+if ( $image_id ) {
+    echo wp_get_attachment_image(
+        $image_id,
+        'hero-banner',
+        false,
+        array( 'class' =&gt; 'hero__image' )
+    );
+}</div>
+      <div class="code-note">wp_get_attachment_image 会生成更完整的图片 HTML。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>4. 获取图片 Alt 文本</h3>
+        <span class="badge">SEO</span>
+      </div>
+      <div class="code">&lt;?php
+$image_id = get_post_thumbnail_id();
+$alt = get_post_meta( $image_id, '_wp_attachment_image_alt', true );
+
+echo '&lt;img src="' . esc_url( get_the_post_thumbnail_url( null, 'large' ) ) . '" alt="' . esc_attr( $alt ) . '"&gt;';</div>
+      <div class="code-note">Alt 文本输出在属性中，要用 esc_attr。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>5. 限制上传文件大小提示</h3>
+        <span class="badge">后台</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_upload_size_notice() {
+    $screen = get_current_screen();
+
+    if ( 'upload' === $screen-&gt;id ) {
+        echo '&lt;div class="notice notice-info"&gt;&lt;p&gt;建议上传前压缩图片，避免超过 300KB。&lt;/p&gt;&lt;/div&gt;';
+    }
+}
+add_action( 'admin_notices', 'mysite_upload_size_notice' );</div>
+      <div class="code-note">可以在媒体库后台给维护人员加提示。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>6. 允许上传 SVG 示例</h3>
+        <span class="badge">安全</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_allow_svg_uploads( $mimes ) {
+    if ( current_user_can( 'manage_options' ) ) {
+        $mimes['svg'] = 'image/svg+xml';
+    }
+
+    return $mimes;
+}
+add_filter( 'upload_mimes', 'mysite_allow_svg_uploads' );</div>
+      <div class="code-note">SVG 可能包含脚本风险，真实项目建议配合 SVG 清理库或专用插件。</div>
+    </article>
+
+    </section>
+
+    <section class="summary-box">
+      <h2>本页总结</h2>
+      <p>媒体相关代码重点是图片尺寸、输出方式、Alt 文本和上传安全。图片处理好，SEO、性能和维护都会更稳定。</p>
+    </section>
+  </main>
+</body>
+</html>

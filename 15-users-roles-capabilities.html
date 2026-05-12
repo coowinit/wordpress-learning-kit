@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>15 用户、角色与权限</title>
+  <link rel="stylesheet" href="css/common.css">
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="hero-card">
+        <h1>15 用户、角色与权限</h1>
+        <p>整理创建角色、添加能力、限制后台菜单、用户字段和登录相关 hooks。</p>
+      </div>
+      <img src="assets/15-users-roles-capabilities.svg" alt="15 用户、角色与权限">
+    </section>
+
+    <nav class="nav">
+      <a href="index.html">首页</a>
+      <a href="01-hooks-functions.html">01</a>
+      <a href="02-theme-setup-assets.html">02</a>
+      <a href="03-template-loop-conditions.html">03</a>
+      <a href="04-cpt-taxonomy.html">04</a>
+      <a href="05-media-images.html">05</a>
+      <a href="06-menus-widgets-sidebars.html">06</a>
+      <a href="07-admin-ui-settings.html">07</a>
+      <a href="08-plugin-architecture.html">08</a>
+      <a href="09-shortcodes-content.html">09</a>
+      <a href="10-gutenberg-blocks.html">10</a>
+      <a href="11-elementor-integration.html">11</a>
+      <a href="12-customizer-settings-api.html">12</a>
+      <a href="13-forms-email-ajax.html">13</a>
+      <a href="14-security-permissions.html">14</a>
+      <a href="15-users-roles-capabilities.html">15</a>
+      <a href="16-rest-api-ajax.html">16</a>
+      <a href="17-seo-schema-head.html">17</a>
+      <a href="18-performance-cache.html">18</a>
+      <a href="19-migration-config.html">19</a>
+      <a href="20-debug-testing-maintenance.html">20</a>
+    </nav>
+
+    <section class="card">
+      <h2>本页关键词</h2>
+      <div class="tag-list">
+        <span>roles</span>
+        <span>capabilities</span>
+        <span>add_role</span>
+        <span>current_user_can</span>
+        <span>user meta</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>学习目标</h2>
+      <ul class="checklist">
+        <li>理解角色和 capability</li>
+        <li>会创建自定义角色</li>
+        <li>会添加/移除能力</li>
+        <li>会给用户添加自定义字段</li>
+        <li>会限制后台访问</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>代码使用提醒</h2>
+      <p>本页代码适合用于学习和研究。复制到正式网站前，请先备份，并优先在测试环境验证。</p>
+      <p>涉及用户输入、后台保存、接口请求、删除操作和邮件发送时，要同时考虑权限、nonce、sanitize、validate 和 escape。</p>
+    </section>
+
+    <section class="code-grid">
+      
+    <article class="code-card">
+      <div class="code-title">
+        <h3>1. 创建自定义角色</h3>
+        <span class="badge">基础</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_add_sales_role() {
+    add_role(
+        'sales_manager',
+        'Sales Manager',
+        array(
+            'read'         =&gt; true,
+            'edit_posts'   =&gt; true,
+            'upload_files' =&gt; true,
+        )
+    );
+}
+register_activation_hook( __FILE__, 'mysite_add_sales_role' );</div>
+      <div class="code-note">角色创建适合放插件激活时，避免每次加载重复执行。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>2. 给角色添加能力</h3>
+        <span class="badge">实用</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_add_cap_to_editor() {
+    $role = get_role( 'editor' );
+
+    if ( $role ) {
+        $role-&gt;add_cap( 'manage_woocommerce' );
+    }
+}</div>
+      <div class="code-note">添加能力前要确认角色存在。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>3. 检查用户能力</h3>
+        <span class="badge">基础</span>
+      </div>
+      <div class="code">&lt;?php
+if ( current_user_can( 'edit_posts' ) ) {
+    echo '你可以编辑文章。';
+}
+
+if ( current_user_can( 'manage_options' ) ) {
+    echo '你可以管理网站设置。';
+}</div>
+      <div class="code-note">不要只判断角色名，优先判断 capability。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>4. 限制非管理员进入后台</h3>
+        <span class="badge">实用</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_redirect_non_admins() {
+    if ( is_admin() &amp;&amp; ! current_user_can( 'edit_posts' ) &amp;&amp; ! wp_doing_ajax() ) {
+        wp_safe_redirect( home_url() );
+        exit;
+    }
+}
+add_action( 'admin_init', 'mysite_redirect_non_admins' );</div>
+      <div class="code-note">注意不要影响 AJAX 请求。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>5. 添加用户资料字段</h3>
+        <span class="badge">进阶</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_user_profile_field( $user ) {
+    ?&gt;
+    &lt;h2&gt;额外信息&lt;/h2&gt;
+    &lt;table class="form-table"&gt;
+        &lt;tr&gt;
+            &lt;th&gt;&lt;label for="department"&gt;部门&lt;/label&gt;&lt;/th&gt;
+            &lt;td&gt;&lt;input type="text" name="department" value="&lt;?php echo esc_attr( get_user_meta( $user-&gt;ID, 'department', true ) ); ?&gt;"&gt;&lt;/td&gt;
+        &lt;/tr&gt;
+    &lt;/table&gt;
+    &lt;?php
+}
+add_action( 'show_user_profile', 'mysite_user_profile_field' );
+add_action( 'edit_user_profile', 'mysite_user_profile_field' );</div>
+      <div class="code-note">用户字段显示和保存需要分别写。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>6. 保存用户资料字段</h3>
+        <span class="badge">进阶</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_save_user_profile_field( $user_id ) {
+    if ( ! current_user_can( 'edit_user', $user_id ) ) {
+        return false;
+    }
+
+    if ( isset( $_POST['department'] ) ) {
+        update_user_meta( $user_id, 'department', sanitize_text_field( $_POST['department'] ) );
+    }
+}
+add_action( 'personal_options_update', 'mysite_save_user_profile_field' );
+add_action( 'edit_user_profile_update', 'mysite_save_user_profile_field' );</div>
+      <div class="code-note">保存用户字段时必须检查 edit_user 权限。</div>
+    </article>
+
+    </section>
+
+    <section class="summary-box">
+      <h2>本页总结</h2>
+      <p>用户系统的代码核心是 capability。角色只是能力集合，真正安全判断应该基于 current_user_can。</p>
+    </section>
+  </main>
+</body>
+</html>
