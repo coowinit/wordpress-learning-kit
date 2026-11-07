@@ -83,7 +83,7 @@ wordpress-learning-kit-code-study/
 | `17-seo-schema-head.html` | 17 SEO、Schema 与 wp_head | 6 个代码场景 |
 | `18-performance-cache.html` | 18 性能、缓存与查询优化 | 6 个代码场景 |
 | `19-migration-config.html` | 19 迁移、配置与环境 | 7 个代码场景 |
-| `20-debug-testing-maintenance.html` | 20 调试、测试与维护 | 7 个代码场景 |
+| `20-debug-testing-maintenance.html` | 20 调试、测试与维护 | 8 个代码场景 |
 
 ## snippets 文件
 
@@ -108,7 +108,20 @@ wordpress-learning-kit-code-study/
 - `snippets/17-seo-schema-head.php`
 - `snippets/18-performance-cache.php`
 - `snippets/19-migration-config.php`
-- `snippets/20-debug-testing-maintenance.php`
+- `snippets/20-debug-testing-maintenance.php`（含紧急密码恢复、维护检查等示例）
+
+## 实用维护案例
+
+第 20 类新增了 **紧急重置 WordPress 管理员密码** 的临时备用示例，适用于无法通过常规方式恢复管理员账户的特殊情况。使用前请阅读代码注释和安全要求：
+
+- 优先使用主机控制面板的密码恢复功能或 WP-CLI。
+- 只有常规方式不可用时，才考虑临时加入主题 `functions.php`。
+- 必须替换管理员登录名和长随机 Token，并通过表单输入新密码。
+- 成功后立即删除临时代码，不得长期留在正式网站。
+- 代码库只保存占位符示例，禁止提交真实密码、Token 或客户站点凭据。
+- `wp_set_password()` 不返回 `WP_Error`，不能用 `is_wp_error()` 判断其执行结果。
+
+对应文件：`snippets/20-debug-testing-maintenance.php`，并同步展示于 `20-debug-testing-maintenance.html`。
 
 ## 推荐学习顺序
 
