@@ -105,3 +105,91 @@ add_action( 'template_redirect', 'mysite_simple_maintenance_mode' );
  * 4. 测试首页、表单、购物车、登录、搜索
  * 5. 查看 debug.log 是否有新错误
  */
+
+
+
+/* =========================================================
+ * 8. 紧急重置 WordPress 管理员密码（临时方案）
+ * Level: 紧急维护
+ * Note:
+ * - 优先使用主机面板的密码重置功能或 WP-CLI。
+ * - 仅在无法使用常规恢复方式时，短暂加入 functions.php。
+ * - 必须替换管理员登录名和随机 Token；不要把真实密码写入公开仓库。
+ * - 成功后立即从 functions.php 删除整段代码。
+ * ========================================================= */
+
+/*
+ * 使用步骤：
+ * 1. 将本段临时加入当前主题的 functions.php。
+ * 2. 将下面两个占位符替换为真实管理员登录名和高强度随机 Token。
+ * 3. 访问 https://example.com/?wem_reset_form=1
+ * 4. 在表单中输入 Token 和新的强密码。
+ * 5. 成功后立即删除 functions.php 中的本段代码。
+ *
+ * 注意：此代码是应急示例，不是长期部署功能。
+ */
+
+add_action( 'init', function () {
+
+    $reset_token = 'REPLACE_WITH_A_LONG_RANDOM_ONE_TIME_TOKEN';
+    $username    = 'REPLACE_WITH_ADMIN_USERNAME';
+
+    // 先处理 POST，避免提交后再次显示表单。
+    if (
+        'POST' === $_SERVER['REQUEST_METHOD']
+        && isset( $_POST['wem_reset_submit'] )
+    ) {
+        $submitted_token = isset( $_POST['wem_reset_token'] )
+            ? (string) wp_unslash( $_POST['wem_reset_token'] )
+            : '';
+
+        if ( ! hash_equals( $reset_token, $submitted_token ) ) {
+            wp_die( 'Invalid security token.', 'Password Reset', array( 'response' => 403 ) );
+        }
+
+        $new_password = isset( $_POST['wem_new_password'] )
+            ? (string) wp_unslash( $_POST['wem_new_password'] )
+            : '';
+
+        if ( strlen( $new_password ) < 16 ) {
+            wp_die( 'Use a password with at least 16 characters.', 'Password Reset', array( 'response' => 400 ) );
+        }
+
+        $user = get_user_by( 'login', $username );
+
+        if ( ! $user || ! in_array( 'administrator', (array) $user->roles, true ) ) {
+            wp_die( 'Administrator account not found.', 'Password Reset', array( 'response' => 404 ) );
+        }
+
+        // wp_set_password() updates the password and does not return WP_Error.
+        wp_set_password( $new_password, $user->ID );
+
+        wp_die(
+            'Password reset request completed. Remove this temporary code from functions.php immediately, then sign in with the new password.',
+            'Password Reset'
+        );
+    }
+
+    // Only show the form on the explicit GET endpoint.
+    if (
+        'GET' === $_SERVER['REQUEST_METHOD']
+        && isset( $_GET['wem_reset_form'] )
+        && '1' === (string) $_GET['wem_reset_form']
+    ) {
+        $form = '
+            <form method="post" autocomplete="off" style="max-width:440px;margin:80px auto;font-family:Arial,sans-serif;">
+                <h2>Administrator Password Reset</h2>
+                <p>Temporary security token</p>
+                <input type="password" name="wem_reset_token" required autocomplete="off" style="width:100%;padding:12px;box-sizing:border-box;">
+                <p>New password (minimum 16 characters)</p>
+                <input type="password" name="wem_new_password" required minlength="16" autocomplete="new-password" style="width:100%;padding:12px;box-sizing:border-box;">
+                <button type="submit" name="wem_reset_submit" value="1" style="margin-top:15px;padding:12px 20px;cursor:pointer;">
+                    Reset Password
+                </button>
+            </form>
+        ';
+
+        wp_die( $form, 'Password Reset' );
+    }
+
+} );
