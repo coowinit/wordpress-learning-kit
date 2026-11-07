@@ -194,61 +194,57 @@ add_action( 'template_redirect', 'mysite_simple_maintenance_mode' );</div>
 
     <article class="code-card">
       <div class="code-title">
-        <h3>8. 紧急重置管理员密码（临时备用）</h3>
+        <h3>8. 紧急重置管理员密码（简易临时方案）</h3>
         <span class="badge">紧急维护</span>
       </div>
       <div class="code">&lt;?php
-// Emergency fallback only. Prefer host tools or WP-CLI first.
-// Replace both placeholders. Remove this block immediately after use.
+/**
+ * 临时重置 WordPress 管理员密码
+ *
+ * 使用方法：
+ * 1. 先备份 functions.php。
+ * 2. 修改下面的用户名、新密码和临时 Token。
+ * 3. 将本段代码临时添加到当前主题的 functions.php。
+ * 4. 访问：https://你的域名/?reset_admin=你的临时Token
+ * 5. 页面提示成功后，立即删除本段代码并保存 functions.php。
+ * 6. 使用新密码登录 WordPress 后台。
+ *
+ * 安全提醒：
+ * - 仅在紧急情况下短暂使用，成功后立即删除。
+ * - Token 应使用随机长字符串，不要使用示例值。
+ * - 不要把填写真实密码和 Token 的版本提交到 GitHub。
+ */
+
+// 仅在 URL 中的 Token 正确时执行。
 add_action( 'init', function () {
-    $reset_token = 'REPLACE_WITH_A_LONG_RANDOM_ONE_TIME_TOKEN';
-    $username    = 'REPLACE_WITH_ADMIN_USERNAME';
 
-    if ( 'POST' === $_SERVER['REQUEST_METHOD'] &amp;&amp; isset( $_POST['wem_reset_submit'] ) ) {
-        $submitted_token = isset( $_POST['wem_reset_token'] )
-            ? (string) wp_unslash( $_POST['wem_reset_token'] )
-            : '';
+    $username     = 'admin'; // 修改为管理员登录名。
+    $new_password = 'YourNewPassword123!'; // 修改为新的强密码。
+    $reset_token  = 'REPLACE_WITH_A_LONG_RANDOM_TOKEN'; // 修改为随机临时 Token。
 
-        if ( ! hash_equals( $reset_token, $submitted_token ) ) {
-            wp_die( 'Invalid security token.', 'Password Reset', array( 'response' =&gt; 403 ) );
-        }
-
-        $new_password = isset( $_POST['wem_new_password'] )
-            ? (string) wp_unslash( $_POST['wem_new_password'] )
-            : '';
-
-        if ( strlen( $new_password ) &lt; 16 ) {
-            wp_die( 'Use a password with at least 16 characters.', 'Password Reset', array( 'response' =&gt; 400 ) );
-        }
-
-        $user = get_user_by( 'login', $username );
-
-        if ( ! $user || ! in_array( 'administrator', (array) $user-&gt;roles, true ) ) {
-            wp_die( 'Administrator account not found.', 'Password Reset', array( 'response' =&gt; 404 ) );
-        }
-
-        // wp_set_password() does not return WP_Error.
-        wp_set_password( $new_password, $user-&gt;ID );
-
-        wp_die( 'Password reset completed. Remove this temporary code immediately.', 'Password Reset' );
+    if (
+        ! isset( $_GET['reset_admin'] ) ||
+        ! is_string( $_GET['reset_admin'] ) ||
+        ! hash_equals( $reset_token, $_GET['reset_admin'] )
+    ) {
+        return;
     }
 
-    if ( 'GET' === $_SERVER['REQUEST_METHOD'] &amp;&amp; isset( $_GET['wem_reset_form'] ) &amp;&amp; '1' === (string) $_GET['wem_reset_form'] ) {
-        $form = '
-            &lt;form method="post" autocomplete="off"&gt;
-                &lt;label&gt;Temporary token
-                    &lt;input type="password" name="wem_reset_token" required autocomplete="off"&gt;
-                &lt;/label&gt;
-                &lt;label&gt;New password (minimum 16 characters)
-                    &lt;input type="password" name="wem_new_password" required minlength="16" autocomplete="new-password"&gt;
-                &lt;/label&gt;
-                &lt;button type="submit" name="wem_reset_submit" value="1"&gt;Reset Password&lt;/button&gt;
-            &lt;/form&gt;
-        ';
-        wp_die( $form, 'Password Reset' );
+    // 查找用户，并确认其具有管理员权限。
+    $user = get_user_by( 'login', $username );
+
+    if ( ! $user || ! user_can( $user, 'manage_options' ) ) {
+        wp_die( '管理员账号不存在或权限不足。' );
     }
+
+    // 使用 WordPress 原生函数重置密码。
+    wp_set_password( $new_password, $user-&gt;ID );
+
+    // 结束本次请求，提醒立即删除代码。
+    wp_die( '密码重置成功！请立即删除 functions.php 中的这段临时代码。' );
+
 } );</div>
-      <div class="code-note">优先使用主机面板或 WP-CLI。仅在无法使用常规恢复方式时临时加入 functions.php；替换占位符，执行成功后立即删除。不要将真实密码或 Token 提交到仓库。</div>
+      <div class="code-note">适用于无法通过主机面板或 WP-CLI 恢复账户时的临时应急操作。使用随机 Token 限制触发权限；成功后立即删除整段代码，不要长期保留。</div>
     </article>
 
     </section>
