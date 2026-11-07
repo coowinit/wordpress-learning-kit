@@ -1,55 +1,258 @@
-<!-- 将下面这个 article 代码卡片替换到 20-debug-testing-maintenance.html 原来的第 8 个代码卡片位置 -->
-<article class="code-card">
-  <div class="code-title">
-    <h3>8. 紧急重置管理员密码（简易临时方案）</h3>
-    <span class="badge">紧急维护</span>
-  </div>
-  <div class="code">&lt;?php
-/**
- * 临时重置 WordPress 管理员密码
- *
- * 使用方法：
- * 1. 先备份 functions.php。
- * 2. 修改下面的管理员用户名和新密码。
- * 3. 将本段代码临时添加到当前主题的 functions.php。
- * 4. 访问：https://你的域名/?reset_admin=1
- * 5. 页面提示成功后，立即删除本段代码并保存。
- * 6. 使用新密码登录 WordPress 后台。
- *
- * 安全提醒：
- * - 仅在紧急情况下短暂使用。
- * - 代码启用期间，知道触发网址的人可能重置指定账户的密码。
- * - 成功后立即删除，不要长期保留。
- * - 不要将填写真实密码的版本提交到 GitHub。
- */
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>20 调试、测试与维护</title>
+  <link rel="stylesheet" href="css/common.css">
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="hero-card">
+        <h1>20 调试、测试与维护</h1>
+        <p>整理 WP_DEBUG、日志、Query Monitor 思路、错误处理、计划任务和维护清单。</p>
+      </div>
+      <img src="assets/20-debug-testing-maintenance.svg" alt="20 调试、测试与维护">
+    </section>
 
-add_action( &#x27;init&#x27;, function () {
+    <nav class="nav">
+      <a href="index.html">首页</a>
+      <a href="01-hooks-functions.html">01</a>
+      <a href="02-theme-setup-assets.html">02</a>
+      <a href="03-template-loop-conditions.html">03</a>
+      <a href="04-cpt-taxonomy.html">04</a>
+      <a href="05-media-images.html">05</a>
+      <a href="06-menus-widgets-sidebars.html">06</a>
+      <a href="07-admin-ui-settings.html">07</a>
+      <a href="08-plugin-architecture.html">08</a>
+      <a href="09-shortcodes-content.html">09</a>
+      <a href="10-gutenberg-blocks.html">10</a>
+      <a href="11-elementor-integration.html">11</a>
+      <a href="12-customizer-settings-api.html">12</a>
+      <a href="13-forms-email-ajax.html">13</a>
+      <a href="14-security-permissions.html">14</a>
+      <a href="15-users-roles-capabilities.html">15</a>
+      <a href="16-rest-api-ajax.html">16</a>
+      <a href="17-seo-schema-head.html">17</a>
+      <a href="18-performance-cache.html">18</a>
+      <a href="19-migration-config.html">19</a>
+      <a href="20-debug-testing-maintenance.html">20</a>
+    </nav>
 
-    // 修改为需要重置的管理员用户名。
-    $username = &#x27;admin&#x27;;
+    <section class="card">
+      <h2>本页关键词</h2>
+      <div class="tag-list">
+        <span>WP_DEBUG</span>
+        <span>error_log</span>
+        <span>WP_Error</span>
+        <span>cron</span>
+        <span>maintenance</span>
+      </div>
+    </section>
 
-    // 修改为新的强密码，建议至少 16 位。
-    $new_password = &#x27;YourNewPassword123!&#x27;;
+    <section class="card">
+      <h2>学习目标</h2>
+      <ul class="checklist">
+        <li>会开启调试日志</li>
+        <li>会写 error_log</li>
+        <li>会处理 WP_Error</li>
+        <li>会注册计划任务</li>
+        <li>知道维护检查清单</li>
+      </ul>
+    </section>
 
-    // 只有访问 ?reset_admin=1 时才执行。
-    if ( ! isset( $_GET[&#x27;reset_admin&#x27;] ) || &#x27;1&#x27; !== $_GET[&#x27;reset_admin&#x27;] ) {
+    <section class="card">
+      <h2>代码使用提醒</h2>
+      <p>本页代码适合用于学习和研究。复制到正式网站前，请先备份，并优先在测试环境验证。</p>
+      <p>涉及用户输入、后台保存、接口请求、删除操作和邮件发送时，要同时考虑权限、nonce、sanitize、validate 和 escape。</p>
+    </section>
+
+    <section class="code-grid">
+      
+    <article class="code-card">
+      <div class="code-title">
+        <h3>1. wp-config 调试配置</h3>
+        <span class="badge">调试</span>
+      </div>
+      <div class="code">&lt;?php
+define( 'WP_DEBUG', true );
+define( 'WP_DEBUG_LOG', true );
+define( 'WP_DEBUG_DISPLAY', false );</div>
+      <div class="code-note">正式站不建议把错误直接显示给访客。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>2. 写入调试日志</h3>
+        <span class="badge">调试</span>
+      </div>
+      <div class="code">&lt;?php
+error_log( 'Contact form handler started.' );
+
+$data = array( 'name' =&gt; 'Test', 'status' =&gt; 'ok' );
+error_log( print_r( $data, true ) );</div>
+      <div class="code-note">临时排查可用 error_log，修复后应清理过多日志。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>3. 处理 WP_Error</h3>
+        <span class="badge">稳定</span>
+      </div>
+      <div class="code">&lt;?php
+$response = wp_remote_get( 'https://example.com/api' );
+
+if ( is_wp_error( $response ) ) {
+    error_log( $response-&gt;get_error_message() );
+    return;
+}
+
+$body = wp_remote_retrieve_body( $response );</div>
+      <div class="code-note">调用接口、插入数据、上传文件时都可能返回 WP_Error。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>4. 注册计划任务</h3>
+        <span class="badge">维护</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_schedule_daily_task() {
+    if ( ! wp_next_scheduled( 'mysite_daily_cleanup' ) ) {
+        wp_schedule_event( time(), 'daily', 'mysite_daily_cleanup' );
+    }
+}
+add_action( 'wp', 'mysite_schedule_daily_task' );
+
+function mysite_daily_cleanup_callback() {
+    // 每日清理逻辑。
+}
+add_action( 'mysite_daily_cleanup', 'mysite_daily_cleanup_callback' );</div>
+      <div class="code-note">WP-Cron 依赖访问触发，不等同于系统 cron。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>5. 停用插件时清理计划任务</h3>
+        <span class="badge">维护</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_clear_scheduled_tasks() {
+    $timestamp = wp_next_scheduled( 'mysite_daily_cleanup' );
+
+    if ( $timestamp ) {
+        wp_unschedule_event( $timestamp, 'mysite_daily_cleanup' );
+    }
+}
+register_deactivation_hook( __FILE__, 'mysite_clear_scheduled_tasks' );</div>
+      <div class="code-note">注册了计划任务，就要考虑停用时清理。</div>
+    </article>
+
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>6. 维护模式短路输出</h3>
+        <span class="badge">维护</span>
+      </div>
+      <div class="code">&lt;?php
+function mysite_simple_maintenance_mode() {
+    if ( current_user_can( 'manage_options' ) ) {
         return;
     }
 
-    // 查找用户，并确认具有管理员权限。
-    $user = get_user_by( &#x27;login&#x27;, $username );
-
-    if ( ! $user || ! user_can( $user, &#x27;manage_options&#x27; ) ) {
-        wp_die( &#x27;管理员账号不存在或权限不足。&#x27; );
+    if ( get_option( 'mysite_maintenance_mode' ) ) {
+        wp_die( '网站维护中，请稍后访问。', 'Maintenance', array( 'response' =&gt; 503 ) );
     }
+}
+add_action( 'template_redirect', 'mysite_simple_maintenance_mode' );</div>
+      <div class="code-note">维护模式要允许管理员访问，且返回合适状态码。</div>
+    </article>
 
-    // 使用 WordPress 原生函数重置密码。
-    wp_set_password( $new_password, $user-&gt;ID );
 
-    // 结束本次请求，提示立即删除临时代码。
-    wp_die( &#x27;密码重置成功！请立即删除 functions.php 中的这段临时代码。&#x27; );
+    <article class="code-card">
+      <div class="code-title">
+        <h3>7. 基础维护检查清单代码注释</h3>
+        <span class="badge">维护</span>
+      </div>
+      <div class="code">&lt;?php
+/**
+ * 每次更新前检查：
+ * 1. 备份数据库和文件
+ * 2. 记录当前 WordPress / 主题 / 插件版本
+ * 3. 在测试环境更新
+ * 4. 测试首页、表单、购物车、登录、搜索
+ * 5. 查看 debug.log 是否有新错误
+ */</div>
+      <div class="code-note">把维护流程写进项目文档，比只靠记忆更可靠。</div>
+    </article>
 
-} );
-</div>
-  <div class="code-note">适用于无法通过主机面板或 WP-CLI 恢复账户时的临时应急操作。代码启用期间存在被他人触发的风险，成功后立即删除整段代码。</div>
-</article>
+    <!-- 将下面这个 article 代码卡片替换到 20-debug-testing-maintenance.html 原来的第 8 个代码卡片位置 -->
+    <article class="code-card">
+      <div class="code-title">
+        <h3>8. 紧急重置管理员密码（简易临时方案）</h3>
+        <span class="badge">紧急维护</span>
+      </div>
+      <div class="code">&lt;?php
+    /**
+    * 临时重置 WordPress 管理员密码
+    *
+    * 使用方法：
+    * 1. 先备份 functions.php。
+    * 2. 修改下面的管理员用户名和新密码。
+    * 3. 将本段代码临时添加到当前主题的 functions.php。
+    * 4. 访问：https://你的域名/?reset_admin=1
+    * 5. 页面提示成功后，立即删除本段代码并保存。
+    * 6. 使用新密码登录 WordPress 后台。
+    *
+    * 安全提醒：
+    * - 仅在紧急情况下短暂使用。
+    * - 代码启用期间，知道触发网址的人可能重置指定账户的密码。
+    * - 成功后立即删除，不要长期保留。
+    * - 不要将填写真实密码的版本提交到 GitHub。
+    */
+
+    add_action( &#x27;init&#x27;, function () {
+
+        // 修改为需要重置的管理员用户名。
+        $username = &#x27;admin&#x27;;
+
+        // 修改为新的强密码，建议至少 16 位。
+        $new_password = &#x27;YourNewPassword123!&#x27;;
+
+        // 只有访问 ?reset_admin=1 时才执行。
+        if ( ! isset( $_GET[&#x27;reset_admin&#x27;] ) || &#x27;1&#x27; !== $_GET[&#x27;reset_admin&#x27;] ) {
+            return;
+        }
+
+        // 查找用户，并确认具有管理员权限。
+        $user = get_user_by( &#x27;login&#x27;, $username );
+
+        if ( ! $user || ! user_can( $user, &#x27;manage_options&#x27; ) ) {
+            wp_die( &#x27;管理员账号不存在或权限不足。&#x27; );
+        }
+
+        // 使用 WordPress 原生函数重置密码。
+        wp_set_password( $new_password, $user-&gt;ID );
+
+        // 结束本次请求，提示立即删除临时代码。
+        wp_die( &#x27;密码重置成功！请立即删除 functions.php 中的这段临时代码。&#x27; );
+
+    } );
+    </div>
+      <div class="code-note">适用于无法通过主机面板或 WP-CLI 恢复账户时的临时应急操作。代码启用期间存在被他人触发的风险，成功后立即删除整段代码。</div>
+    </article>
+
+    </section>
+
+    <section class="summary-box">
+      <h2>本页总结</h2>
+      <p>调试维护的重点是日志、错误处理、计划任务和复测流程。任何修复都要以备份和可回滚为前提。</p>
+    </section>
+  </main>
+</body>
+</html>
