@@ -191,6 +191,66 @@ add_action( 'template_redirect', 'mysite_simple_maintenance_mode' );</div>
       <div class="code-note">把维护流程写进项目文档，比只靠记忆更可靠。</div>
     </article>
 
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>8. 紧急重置管理员密码（临时备用）</h3>
+        <span class="badge">紧急维护</span>
+      </div>
+      <div class="code">&lt;?php
+// Emergency fallback only. Prefer host tools or WP-CLI first.
+// Replace both placeholders. Remove this block immediately after use.
+add_action( 'init', function () {
+    $reset_token = 'REPLACE_WITH_A_LONG_RANDOM_ONE_TIME_TOKEN';
+    $username    = 'REPLACE_WITH_ADMIN_USERNAME';
+
+    if ( 'POST' === $_SERVER['REQUEST_METHOD'] &amp;&amp; isset( $_POST['wem_reset_submit'] ) ) {
+        $submitted_token = isset( $_POST['wem_reset_token'] )
+            ? (string) wp_unslash( $_POST['wem_reset_token'] )
+            : '';
+
+        if ( ! hash_equals( $reset_token, $submitted_token ) ) {
+            wp_die( 'Invalid security token.', 'Password Reset', array( 'response' =&gt; 403 ) );
+        }
+
+        $new_password = isset( $_POST['wem_new_password'] )
+            ? (string) wp_unslash( $_POST['wem_new_password'] )
+            : '';
+
+        if ( strlen( $new_password ) &lt; 16 ) {
+            wp_die( 'Use a password with at least 16 characters.', 'Password Reset', array( 'response' =&gt; 400 ) );
+        }
+
+        $user = get_user_by( 'login', $username );
+
+        if ( ! $user || ! in_array( 'administrator', (array) $user-&gt;roles, true ) ) {
+            wp_die( 'Administrator account not found.', 'Password Reset', array( 'response' =&gt; 404 ) );
+        }
+
+        // wp_set_password() does not return WP_Error.
+        wp_set_password( $new_password, $user-&gt;ID );
+
+        wp_die( 'Password reset completed. Remove this temporary code immediately.', 'Password Reset' );
+    }
+
+    if ( 'GET' === $_SERVER['REQUEST_METHOD'] &amp;&amp; isset( $_GET['wem_reset_form'] ) &amp;&amp; '1' === (string) $_GET['wem_reset_form'] ) {
+        $form = '
+            &lt;form method="post" autocomplete="off"&gt;
+                &lt;label&gt;Temporary token
+                    &lt;input type="password" name="wem_reset_token" required autocomplete="off"&gt;
+                &lt;/label&gt;
+                &lt;label&gt;New password (minimum 16 characters)
+                    &lt;input type="password" name="wem_new_password" required minlength="16" autocomplete="new-password"&gt;
+                &lt;/label&gt;
+                &lt;button type="submit" name="wem_reset_submit" value="1"&gt;Reset Password&lt;/button&gt;
+            &lt;/form&gt;
+        ';
+        wp_die( $form, 'Password Reset' );
+    }
+} );</div>
+      <div class="code-note">优先使用主机面板或 WP-CLI。仅在无法使用常规恢复方式时临时加入 functions.php；替换占位符，执行成功后立即删除。不要将真实密码或 Token 提交到仓库。</div>
+    </article>
+
     </section>
 
     <section class="summary-box">
