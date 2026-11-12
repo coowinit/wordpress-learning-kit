@@ -178,8 +178,7 @@ add_filter( 'upload_mimes', 'mysite_allow_svg_uploads' );</div>
         <span class="badge">实用</span>
       </div>
       <div class="code">&lt;?php
-// 兼容作者归档页 author.php 和博客详情页 single.php
-// 两种页面的查询对象不同，需要分别获取作者 ID
+// 兼容作者归档页和普通文章详情页
 $author_id = 0;
 
 if ( is_author() ) {
@@ -188,33 +187,35 @@ if ( is_author() ) {
     $author_id = (int) get_post_field( 'post_author', get_queried_object_id() );
 }
 
-if ( $author_id ) :
-    $author_name = get_the_author_meta( 'display_name', $author_id );
+// 获取作者信息
+$author_name = $author_id ? get_the_author_meta( 'display_name', $author_id ) : '';
+$author_bio  = $author_id ? get_the_author_meta( 'description', $author_id ) : '';
 
-    // 作者 ID 与头像路径映射（请根据实际网站修改）
-    $author_avatars = [
-        8  =&gt; '/wp-content/uploads/2024/06/kelin.webp',
-        12 =&gt; '/wp-content/uploads/2024/06/galen.webp',
-    ];
+// 作者头像映射（请按实际网站修改）
+$author_avatars = [
+    8  =&gt; '/wp-content/uploads/2024/06/kelin.webp',
+    12 =&gt; '/wp-content/uploads/2024/06/galen.webp',
+];
+?&gt;
 
-    // 未配置的作者显示默认头像
-    $avatar_path = $author_avatars[ $author_id ] ?? '/wp-content/uploads/2024/06/avatar-au.webp';
-    $avatar_url  = home_url( $avatar_path );
-    ?&gt;
-    &lt;div class="author-profile__avatar"&gt;
-        &lt;img class="author-avatar" src="&lt;?php echo esc_url( $avatar_url ); ?&gt;" alt="&lt;?php echo esc_attr( $author_name ); ?&gt;" width="110" height="110" loading="eager" decoding="async"&gt;
-    &lt;/div&gt;
+&lt;?php if ( $author_id ) : ?&gt;
+&lt;div class="author-profile__avatar"&gt;
+    &lt;img class="author-avatar"
+         src="&lt;?php echo esc_url( home_url( $author_avatars[ $author_id ] ?? '/wp-content/uploads/2024/06/avatar-au.webp' ) ); ?&gt;"
+         alt="&lt;?php echo esc_attr( $author_name ); ?&gt;"
+         width="110"
+         height="110"
+         loading="eager"
+         decoding="async"&gt;
+&lt;/div&gt;
+&lt;?php endif; ?&gt;
 
-    &lt;?php
-    // 作者简介为空时，不输出段落标签
-    $author_bio = get_the_author_meta( 'description', $author_id );
-    if ( $author_bio ) : ?&gt;
-        &lt;p class="author-profile"&gt;
-            &lt;?php echo esc_html( $author_bio ); ?&gt;
-        &lt;/p&gt;
-    &lt;?php endif; ?&gt;
+&lt;?php if ( $author_bio ) : ?&gt;
+&lt;p class="author-profile__bio"&gt;
+    &lt;?php echo esc_html( $author_bio ); ?&gt;
+&lt;/p&gt;
 &lt;?php endif; ?&gt;</div>
-      <div class="code-note">适用于 author.php 与 single.php（普通文章）。作者归档取当前作者 ID，博客详情取当前文章的作者 ID。请替换头像映射中的作者 ID 和图片路径，提前上传图片。未映射的作者使用默认头像；简介为空时不输出段落。若头像不在首屏可将 eager 改为 lazy。本代码是模板片段，不要直接执行整个 snippets 分类文件。</div>
+      <div class="code-note">适用于 author.php 和普通文章的 single.php。根据页面类型获取作者 ID；头像与简介分别独立判断，只有有效作者 ID 时才生成头像 URL。请根据实际站点修改头像映射及路径，并上传对应图片；未指定时使用默认头像。简介为空时不输出段落。若头像不在首屏，可将 eager 改为 lazy。此代码是独立模板片段，不要执行整个分类 PHP 文件。简介的 CSS 类名为 author-profile__bio，使用时检查现有样式。</div>
     </article>
     </section>
 
