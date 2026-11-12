@@ -174,37 +174,47 @@ add_filter( 'upload_mimes', 'mysite_allow_svg_uploads' );</div>
 
     <article class="code-card">
       <div class="code-title">
-        <h3>7. 作者归档页：自定义头像与作者简介</h3>
+        <h3>7. 作者归档与博客详情页：自定义头像和简介</h3>
         <span class="badge">实用</span>
       </div>
       <div class="code">&lt;?php
-// 在 author.php 作者归档模板中获取当前作者信息
-$archive_author_id   = get_queried_object_id();
-$archive_author_name = get_the_author_meta( 'display_name', $archive_author_id );
-?&gt;
-&lt;div class="author-profile__avatar"&gt;
-    &lt;?php
-    // 作者 ID 与头像路径的映射关系（示例数据，请按实际网站修改）
+// 兼容作者归档页 author.php 和博客详情页 single.php
+// 两种页面的查询对象不同，需要分别获取作者 ID
+$author_id = 0;
+
+if ( is_author() ) {
+    $author_id = get_queried_object_id();
+} elseif ( is_singular( 'post' ) ) {
+    $author_id = (int) get_post_field( 'post_author', get_queried_object_id() );
+}
+
+if ( $author_id ) :
+    $author_name = get_the_author_meta( 'display_name', $author_id );
+
+    // 作者 ID 与头像路径映射（请根据实际网站修改）
     $author_avatars = [
         8  =&gt; '/wp-content/uploads/2024/06/kelin.webp',
         12 =&gt; '/wp-content/uploads/2024/06/galen.webp',
     ];
 
-    // 未配置的作者使用默认头像
-    $avatar_path = $author_avatars[ $archive_author_id ] ?? '/wp-content/uploads/2024/06/avatar-au.webp';
+    // 未配置的作者显示默认头像
+    $avatar_path = $author_avatars[ $author_id ] ?? '/wp-content/uploads/2024/06/avatar-au.webp';
     $avatar_url  = home_url( $avatar_path );
     ?&gt;
-    &lt;img class="author-avatar" src="&lt;?php echo esc_url( $avatar_url ); ?&gt;" alt="&lt;?php echo esc_attr( $archive_author_name ); ?&gt;" width="110" height="110" loading="eager" decoding="async"&gt;
-&lt;/div&gt;
-&lt;?php
-// 作者简介为空时，不输出空的段落标签
-$author_bio = get_the_author_meta( 'description', $archive_author_id );
-if ( $author_bio ) : ?&gt;
-    &lt;p class="author-profile"&gt;
-        &lt;?php echo esc_html( $author_bio ); ?&gt;
-    &lt;/p&gt;
+    &lt;div class="author-profile__avatar"&gt;
+        &lt;img class="author-avatar" src="&lt;?php echo esc_url( $avatar_url ); ?&gt;" alt="&lt;?php echo esc_attr( $author_name ); ?&gt;" width="110" height="110" loading="eager" decoding="async"&gt;
+    &lt;/div&gt;
+
+    &lt;?php
+    // 作者简介为空时，不输出段落标签
+    $author_bio = get_the_author_meta( 'description', $author_id );
+    if ( $author_bio ) : ?&gt;
+        &lt;p class="author-profile"&gt;
+            &lt;?php echo esc_html( $author_bio ); ?&gt;
+        &lt;/p&gt;
+    &lt;?php endif; ?&gt;
 &lt;?php endif; ?&gt;</div>
-      <div class="code-note">适用于主题的 author.php 作者归档模板。先上传对应图片并替换作者 ID、图片路径；未映射的作者显示默认头像。此代码使用固定图片路径，不会读取 WordPress 用户头像设置。图片紧邻页面首屏时可保留 eager，否则可改为 lazy。简介仅在有内容时显示，避免空段落。</div>
+      <div class="code-note">适用于 author.php 与 single.php（普通文章）。作者归档取当前作者 ID，博客详情取当前文章的作者 ID。请替换头像映射中的作者 ID 和图片路径，提前上传图片。未映射的作者使用默认头像；简介为空时不输出段落。若头像不在首屏可将 eager 改为 lazy。本代码是模板片段，不要直接执行整个 snippets 分类文件。</div>
     </article>
     </section>
 
