@@ -171,6 +171,33 @@ add_filter( 'upload_mimes', 'mysite_allow_svg_uploads' );</div>
       <div class="code-note">SVG 可能包含脚本风险，真实项目建议配合 SVG 清理库或专用插件。</div>
     </article>
 
+
+    <article class="code-card">
+      <div class="code-title">
+        <h3>7. 根据作者 ID 显示自定义头像（含默认头像）</h3>
+        <span class="badge">实用</span>
+      </div>
+      <div class="code">&lt;?php
+// 在 author.php 作者归档模板中获取当前作者信息
+$archive_author_id   = get_queried_object_id();
+$archive_author_name = get_the_author_meta( 'display_name', $archive_author_id );
+?&gt;
+&lt;div class="author-profile__avatar"&gt;
+    &lt;?php
+    // 作者 ID 与头像路径的映射关系（示例数据，请按实际网站修改）
+    $author_avatars = [
+        8  =&gt; '/wp-content/uploads/2024/06/kelin.webp',
+        12 =&gt; '/wp-content/uploads/2024/06/galen.webp',
+    ];
+
+    // 未配置的作者使用默认头像
+    $avatar_path = $author_avatars[ $archive_author_id ] ?? '/wp-content/uploads/2024/06/avatar-au.webp';
+    $avatar_url  = home_url( $avatar_path );
+    ?&gt;
+    &lt;img class="author-avatar" src="&lt;?php echo esc_url( $avatar_url ); ?&gt;" alt="&lt;?php echo esc_attr( $archive_author_name ); ?&gt;" width="110" height="110" loading="eager" decoding="async"&gt;
+&lt;/div&gt;</div>
+      <div class="code-note">适用于主题的 author.php 作者归档模板。先上传对应图片并替换作者 ID、图片路径；未映射的作者显示默认头像。此代码使用固定图片路径，不会读取 WordPress 用户头像设置。图片紧邻页面首屏时可保留 eager，否则可改为 lazy。</div>
+    </article>
     </section>
 
     <section class="summary-box">
