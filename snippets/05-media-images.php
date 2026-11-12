@@ -91,40 +91,49 @@ add_filter( 'upload_mimes', 'mysite_allow_svg_uploads' );
 
 
 /* =========================================================
- * 7. 作者归档页：自定义头像与作者简介
+ * 7. 作者归档与博客详情页：自定义头像和简介
  * Level: 实用
- * Usage: 放入主题 author.php 的作者资料显示位置。
- * Note: 将示例作者 ID、图片路径替换成当前站点实际值；
- *       未映射的作者显示默认头像，图片文件需提前上传。
- *       作者简介读取用户资料 description；为空则不渲染段落。
- *       本片段面向作者归档页；不要把整个分类文件直接执行。
+ * Usage: 将此片段放入 author.php 或 single.php 的作者信息位置。
+ * Note: author.php 取当前作者 ID；single.php 取当前文章作者 ID。
+ *       请按实际网站修改头像映射、图片路径并提前上传图片。
+ *       未映射的作者使用默认头像；简介为空则不输出段落。
+ *       这是独立模板示例，不要直接执行整个分类文件。
  * ========================================================= */
 ?>
 <?php
-// 在 author.php 作者归档模板中获取当前作者信息
-$archive_author_id   = get_queried_object_id();
-$archive_author_name = get_the_author_meta( 'display_name', $archive_author_id );
-?>
-<div class="author-profile__avatar">
-    <?php
-    // 作者 ID 与头像路径的映射关系（示例数据，请按实际网站修改）
+// 兼容作者归档页 author.php 和博客详情页 single.php
+// 两种页面的查询对象不同，需要分别获取作者 ID
+$author_id = 0;
+
+if ( is_author() ) {
+    $author_id = get_queried_object_id();
+} elseif ( is_singular( 'post' ) ) {
+    $author_id = (int) get_post_field( 'post_author', get_queried_object_id() );
+}
+
+if ( $author_id ) :
+    $author_name = get_the_author_meta( 'display_name', $author_id );
+
+    // 作者 ID 与头像路径映射（请根据实际网站修改）
     $author_avatars = [
         8  => '/wp-content/uploads/2024/06/kelin.webp',
         12 => '/wp-content/uploads/2024/06/galen.webp',
     ];
 
-    // 未配置的作者使用默认头像
-    $avatar_path = $author_avatars[ $archive_author_id ] ?? '/wp-content/uploads/2024/06/avatar-au.webp';
+    // 未配置的作者显示默认头像
+    $avatar_path = $author_avatars[ $author_id ] ?? '/wp-content/uploads/2024/06/avatar-au.webp';
     $avatar_url  = home_url( $avatar_path );
     ?>
-    <img class="author-avatar" src="<?php echo esc_url( $avatar_url ); ?>" alt="<?php echo esc_attr( $archive_author_name ); ?>" width="110" height="110" loading="eager" decoding="async">
-</div>
+    <div class="author-profile__avatar">
+        <img class="author-avatar" src="<?php echo esc_url( $avatar_url ); ?>" alt="<?php echo esc_attr( $author_name ); ?>" width="110" height="110" loading="eager" decoding="async">
+    </div>
 
-<?php
-// 作者简介为空时，不输出空的段落标签
-$author_bio = get_the_author_meta( 'description', $archive_author_id );
-if ( $author_bio ) : ?>
-    <p class="author-profile">
-        <?php echo esc_html( $author_bio ); ?>
-    </p>
+    <?php
+    // 作者简介为空时，不输出段落标签
+    $author_bio = get_the_author_meta( 'description', $author_id );
+    if ( $author_bio ) : ?>
+        <p class="author-profile">
+            <?php echo esc_html( $author_bio ); ?>
+        </p>
+    <?php endif; ?>
 <?php endif; ?>
