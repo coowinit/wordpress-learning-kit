@@ -93,16 +93,16 @@ add_filter( 'upload_mimes', 'mysite_allow_svg_uploads' );
 /* =========================================================
  * 7. 作者归档与博客详情页：自定义头像和简介
  * Level: 实用
- * Usage: 将此片段放入 author.php 或 single.php 的作者信息位置。
- * Note: author.php 取当前作者 ID；single.php 取当前文章作者 ID。
- *       请按实际网站修改头像映射、图片路径并提前上传图片。
- *       未映射的作者使用默认头像；简介为空则不输出段落。
- *       这是独立模板示例，不要直接执行整个分类文件。
+ * Usage: 放入 author.php 或普通文章 single.php 对应的作者信息位置。
+ * Note: 根据页面类型获取作者 ID；头像与简介各自独立判断。
+ *       仅在有作者 ID 时生成头像 URL；没有简介时不输出段落。
+ *       请调整作者 ID、图片路径，并确认图片已上传。
+ *       简介类名为 author-profile__bio，注意与主题 CSS 对应。
+ *       此代码是独立模板片段，不要直接执行整个分类文件。
  * ========================================================= */
 ?>
 <?php
-// 兼容作者归档页 author.php 和博客详情页 single.php
-// 两种页面的查询对象不同，需要分别获取作者 ID
+// 兼容作者归档页和普通文章详情页
 $author_id = 0;
 
 if ( is_author() ) {
@@ -111,29 +111,31 @@ if ( is_author() ) {
     $author_id = (int) get_post_field( 'post_author', get_queried_object_id() );
 }
 
-if ( $author_id ) :
-    $author_name = get_the_author_meta( 'display_name', $author_id );
+// 获取作者信息
+$author_name = $author_id ? get_the_author_meta( 'display_name', $author_id ) : '';
+$author_bio  = $author_id ? get_the_author_meta( 'description', $author_id ) : '';
 
-    // 作者 ID 与头像路径映射（请根据实际网站修改）
-    $author_avatars = [
-        8  => '/wp-content/uploads/2024/06/kelin.webp',
-        12 => '/wp-content/uploads/2024/06/galen.webp',
-    ];
+// 作者头像映射（请按实际网站修改）
+$author_avatars = [
+    8  => '/wp-content/uploads/2024/06/kelin.webp',
+    12 => '/wp-content/uploads/2024/06/galen.webp',
+];
+?>
 
-    // 未配置的作者显示默认头像
-    $avatar_path = $author_avatars[ $author_id ] ?? '/wp-content/uploads/2024/06/avatar-au.webp';
-    $avatar_url  = home_url( $avatar_path );
-    ?>
-    <div class="author-profile__avatar">
-        <img class="author-avatar" src="<?php echo esc_url( $avatar_url ); ?>" alt="<?php echo esc_attr( $author_name ); ?>" width="110" height="110" loading="eager" decoding="async">
-    </div>
+<?php if ( $author_id ) : ?>
+<div class="author-profile__avatar">
+    <img class="author-avatar"
+         src="<?php echo esc_url( home_url( $author_avatars[ $author_id ] ?? '/wp-content/uploads/2024/06/avatar-au.webp' ) ); ?>"
+         alt="<?php echo esc_attr( $author_name ); ?>"
+         width="110"
+         height="110"
+         loading="eager"
+         decoding="async">
+</div>
+<?php endif; ?>
 
-    <?php
-    // 作者简介为空时，不输出段落标签
-    $author_bio = get_the_author_meta( 'description', $author_id );
-    if ( $author_bio ) : ?>
-        <p class="author-profile">
-            <?php echo esc_html( $author_bio ); ?>
-        </p>
-    <?php endif; ?>
+<?php if ( $author_bio ) : ?>
+<p class="author-profile__bio">
+    <?php echo esc_html( $author_bio ); ?>
+</p>
 <?php endif; ?>
