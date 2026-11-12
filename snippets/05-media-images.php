@@ -88,3 +88,32 @@ function mysite_allow_svg_uploads( $mimes ) {
     return $mimes;
 }
 add_filter( 'upload_mimes', 'mysite_allow_svg_uploads' );
+
+
+/* =========================================================
+ * 7. 根据作者 ID 显示自定义头像（含默认头像）
+ * Level: 实用
+ * Usage: 放入主题 author.php 的作者头像显示位置。
+ * Note: 将示例作者 ID、图片路径替换成当前站点实际值；
+ *       未映射的作者显示默认头像，图片文件需提前上传。
+ *       本片段面向作者归档页；不要把整个分类文件直接执行。
+ * ========================================================= */
+<?php
+// 在 author.php 作者归档模板中获取当前作者信息
+$archive_author_id   = get_queried_object_id();
+$archive_author_name = get_the_author_meta( 'display_name', $archive_author_id );
+?>
+<div class="author-profile__avatar">
+    <?php
+    // 作者 ID 与头像路径的映射关系（示例数据，请按实际网站修改）
+    $author_avatars = [
+        8  => '/wp-content/uploads/2024/06/kelin.webp',
+        12 => '/wp-content/uploads/2024/06/galen.webp',
+    ];
+
+    // 未配置的作者使用默认头像
+    $avatar_path = $author_avatars[ $archive_author_id ] ?? '/wp-content/uploads/2024/06/avatar-au.webp';
+    $avatar_url  = home_url( $avatar_path );
+    ?>
+    <img class="author-avatar" src="<?php echo esc_url( $avatar_url ); ?>" alt="<?php echo esc_attr( $archive_author_name ); ?>" width="110" height="110" loading="eager" decoding="async">
+</div>
