@@ -91,13 +91,15 @@ add_filter( 'upload_mimes', 'mysite_allow_svg_uploads' );
 
 
 /* =========================================================
- * 7. 根据作者 ID 显示自定义头像（含默认头像）
+ * 7. 作者归档页：自定义头像与作者简介
  * Level: 实用
- * Usage: 放入主题 author.php 的作者头像显示位置。
+ * Usage: 放入主题 author.php 的作者资料显示位置。
  * Note: 将示例作者 ID、图片路径替换成当前站点实际值；
  *       未映射的作者显示默认头像，图片文件需提前上传。
+ *       作者简介读取用户资料 description；为空则不渲染段落。
  *       本片段面向作者归档页；不要把整个分类文件直接执行。
  * ========================================================= */
+?>
 <?php
 // 在 author.php 作者归档模板中获取当前作者信息
 $archive_author_id   = get_queried_object_id();
@@ -117,3 +119,12 @@ $archive_author_name = get_the_author_meta( 'display_name', $archive_author_id )
     ?>
     <img class="author-avatar" src="<?php echo esc_url( $avatar_url ); ?>" alt="<?php echo esc_attr( $archive_author_name ); ?>" width="110" height="110" loading="eager" decoding="async">
 </div>
+
+<?php
+// 作者简介为空时，不输出空的段落标签
+$author_bio = get_the_author_meta( 'description', $archive_author_id );
+if ( $author_bio ) : ?>
+    <p class="author-profile">
+        <?php echo esc_html( $author_bio ); ?>
+    </p>
+<?php endif; ?>
